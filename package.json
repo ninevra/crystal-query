@@ -1,0 +1,24 @@
+{
+  "name": "query-filter",
+  "version": "0.1.0",
+  "description": "A simple query language with customizable semantics",
+  "author": "ninevra",
+  "license": "ISC",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "ava"
+  },
+  "dependencies": {
+    "parsimmon": "^1.13.0"
+  },
+  "devDependencies": {
+    "ava": "^3.9.0"
+  },
+  "ava": {
+    "verbose": true,
+    "nonSemVerExperiments": {
+			"likeAssertion": true
+		}
+  }
+}
