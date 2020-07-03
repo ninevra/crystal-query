@@ -8,7 +8,8 @@
   "type": "module",
   "scripts": {
     "test": "c8 ava",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "snaps:update": "ava --update-snapshots"
   },
   "dependencies": {
     "parsimmon": "^1.13.0"
@@ -22,7 +23,8 @@
     "verbose": true,
     "nonSemVerExperiments": {
       "likeAssertion": true
-    }
+    },
+    "snapshotDir": "snapshots"
   },
   "prettier": {
     "singleQuote": true
