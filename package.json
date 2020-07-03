@@ -7,13 +7,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "ava"
+    "test": "c8 ava"
   },
   "dependencies": {
     "parsimmon": "^1.13.0"
   },
   "devDependencies": {
-    "ava": "^3.9.0"
+    "ava": "^3.9.0",
+    "c8": "^7.2.0"
   },
   "ava": {
     "verbose": true,

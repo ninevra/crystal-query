@@ -1,2 +1,5 @@
 # ignore dependencies
 /node_modules/
+
+# ignore c8 coverage reports
+/coverage/
