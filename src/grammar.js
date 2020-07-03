@@ -1,24 +1,21 @@
 import parsimmon from 'parsimmon';
 
-export function operatorParser(...operators) {
+export function makeParser(value) {
   // TODO: also accept parsimmon parsers (test with Parsimmon.isParser()),
   // regexes (test how?)
-  const individualParsers = operators.map((operator) =>
-    parsimmon.string(operator)
-  );
-  return parsimmon.alt(...individualParsers);
+  return parsimmon.string(value);
 }
 
 export class Parser {
   constructor({
-    operators = [':', '>', '>=', '=', '<=', '<'],
+    operators = [':', '>=', '<=', '<', '=', '>'],
     conjunctionMsg = ({ left, right }) => `${left} and ${right}`,
     disjunctionMsg = ({ left, right }) => `${left} or ${right}`,
   } = {}) {
     this.conjunctionMsg = conjunctionMsg;
     this.disjunctionMsg = disjunctionMsg;
     this.language = parsimmon.createLanguage({
-      operator: () => operatorParser(...operators),
+      operator: () => parsimmon.alt(...operators.map(makeParser)),
       and: (l) => l.word.assert((word) => word === 'and', 'and'),
       or: (l) => l.word.assert((word) => word === 'or', 'or'),
       not: (l) => l.word.assert((word) => word === 'not', 'not'),
