@@ -18,7 +18,7 @@
   "ava": {
     "verbose": true,
     "nonSemVerExperiments": {
-			"likeAssertion": true
-		}
+      "likeAssertion": true
+    }
   }
 }
