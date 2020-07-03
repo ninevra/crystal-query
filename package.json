@@ -7,19 +7,24 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "c8 ava"
+    "test": "c8 ava",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "parsimmon": "^1.13.0"
   },
   "devDependencies": {
     "ava": "^3.9.0",
-    "c8": "^7.2.0"
+    "c8": "^7.2.0",
+    "prettier": "^2.0.5"
   },
   "ava": {
     "verbose": true,
     "nonSemVerExperiments": {
       "likeAssertion": true
     }
+  },
+  "prettier": {
+    "singleQuote": true
   }
 }
