@@ -42,6 +42,28 @@ export function fieldEquals({ name, plural, value, negated }) {
   return `${name} ${verb} ${value}`;
 }
 
+function fieldSimple({ name, plural, value, negated, relation }) {
+  return `${name} ${plural ? 'are' : 'is'}${
+    negated ? ' not' : ''
+  } ${relation} ${value}`;
+}
+
+export function fieldGreaterThan(args) {
+  return fieldSimple({ ...args, relation: 'greater than' });
+}
+
+export function fieldGreaterOrEqual(args) {
+  return fieldSimple({ ...args, relation: 'at least' });
+}
+
+export function fieldLessOrEqual(args) {
+  return fieldSimple({ ...args, relation: 'at most' });
+}
+
+export function fieldLessThan(args) {
+  return fieldSimple({ ...args, relation: 'less than' });
+}
+
 export function errorMissingField({ name }) {
   return `unknown field "${name}"`;
 }
