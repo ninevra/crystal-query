@@ -1,18 +1,9 @@
 import { Parser } from './grammar.js';
+import { GenericFieldHandler } from './fields.js';
 
 export class InvalidNodeError extends Error {
   constructor(astNode) {
     super(`Invalid AST node ${JSON.stringify(astNode)}`);
-  }
-}
-
-export class GenericFieldHandler {
-  get(name, operator, value) {
-    return {
-      describe: (negated) =>
-        `${negated ? 'not ' : ''}${name}${operator}${value}`,
-      filter: () => true,
-    };
   }
 }
 
