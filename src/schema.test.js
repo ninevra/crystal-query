@@ -5,7 +5,6 @@ import test from 'ava';
 test('describe() renders query descriptions', (t) => {
   const query = 'not (a or b:"c d") and e>3';
   const description = new Schema().describe(query);
-  console.log(description);
   t.snapshot(description);
 });
 
