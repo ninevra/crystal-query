@@ -7,13 +7,7 @@ export function makeParser(value) {
 }
 
 export class Parser {
-  constructor({
-    operators = [':', '>=', '<=', '<', '=', '>'],
-    conjunctionMsg = ({ left, right }) => `${left} and ${right}`,
-    disjunctionMsg = ({ left, right }) => `${left} or ${right}`
-  } = {}) {
-    this.conjunctionMsg = conjunctionMsg;
-    this.disjunctionMsg = disjunctionMsg;
+  constructor({ operators = [':', '>=', '<=', '<', '=', '>'] } = {}) {
     this.language = parsimmon.createLanguage({
       operator: () => parsimmon.alt(...operators.map(makeParser)),
       and: (l) => l.word.assert((word) => word === 'and', 'and'),

@@ -10,7 +10,7 @@ export class InvalidNodeError extends Error {
 
 export class Schema {
   constructor({
-    parser = new Parser(),
+    operators = [':', '>=', '<=', '<', '=', '>'],
     fieldHandler = new GenericFieldHandler(),
     descriptors: {
       conjunction = ({ left, right }) => messages.conjunction({ left, right }),
@@ -18,7 +18,7 @@ export class Schema {
       parenthetical = ({ expression }) => messages.parenthetical({ expression })
     } = {}
   } = {}) {
-    this.parser = parser;
+    this.parser = new Parser({ operators });
     this.fieldHandler = fieldHandler;
     this.descriptors = { conjunction, disjunction, parenthetical };
   }
