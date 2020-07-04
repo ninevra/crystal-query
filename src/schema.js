@@ -1,4 +1,4 @@
-import { Parser } from './grammar.js';
+import { Parser } from './parser.js';
 import { GenericFieldHandler } from './fields.js';
 import * as messages from './messages.js';
 

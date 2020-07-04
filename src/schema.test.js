@@ -1,5 +1,5 @@
 import { Schema } from './schema.js';
-import { Parser } from './grammar.js';
+import { Parser } from './parser.js';
 import test from 'ava';
 
 test('describe() renders query descriptions', (t) => {

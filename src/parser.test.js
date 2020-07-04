@@ -1,6 +1,6 @@
 import test from 'ava';
 import parsimmon from 'parsimmon';
-import { Parser } from './grammar.js';
+import { Parser } from './parser.js';
 
 test('language.operator recognizes string operators', (t) => {
   const { operator } = new Parser().language;
