@@ -64,7 +64,8 @@ export class Schema {
       case 'And':
       case 'Or':
         return (
-          this.validateNode(astNode.value[0]) && this.validateNode(astNode.value[1])
+          this.validateNode(astNode.value[0]) &&
+          this.validateNode(astNode.value[1])
         );
       case 'Not':
       case 'Parenthetical':
@@ -78,7 +79,7 @@ export class Schema {
     }
   }
   evaluate(query) {
-    const {status, value: ast} = this.parser.parse(query);
+    const { status, value: ast } = this.parser.parse(query);
     if (!status) throw new Error(`parse failed for "${query}"`);
     return this.evaluateNode(ast);
   }
