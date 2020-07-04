@@ -1,3 +1,5 @@
+import * as messages from './messages.js';
+
 export const Status = {
   SUCCESS: Symbol.for('query-filter.field-status.success'),
   ERROR: Symbol.for('query-filter.field-status.error'),
@@ -8,7 +10,7 @@ export class GenericFieldHandler {
     return {
       status: Status.SUCCESS,
       describe: (negated) =>
-        `${negated ? 'not ' : ''}${name}${operator}${value}`,
+        messages.fieldGeneric({ name, operator, value, negated }),
       filter: () => true,
     };
   }
@@ -19,9 +21,8 @@ export class FieldHandler {
     fields,
     {
       errors: {
-        missingField = (name) => `unknown field "${name}"`,
-        missingOperator = (name, operator) =>
-          `can't use "${operator}" on field "${name}"`,
+        missingField = messages.errorMissingField,
+        missingOperator = messages.errorMissingOperator,
       } = {},
     } = {}
   ) {
@@ -32,12 +33,12 @@ export class FieldHandler {
     if (!this.fields[name]) {
       return {
         status: Status.ERROR,
-        error: this.errorDesciptors.missingField(name),
+        error: this.errorDesciptors.missingField({ name }),
       };
     } else if (!this.fields[name][operator]) {
       return {
         status: Status.ERROR,
-        error: this.errorDesciptors.missingOperator(name, operator),
+        error: this.errorDesciptors.missingOperator({ name, operator }),
       };
     } else {
       try {
@@ -59,30 +60,24 @@ export class StringPropertyField {
   ':'(value) {
     return {
       describe: (negated) =>
-        `${this.name} ${
-          negated
-            ? this.plural
-              ? 'do not contain'
-              : 'does not contain'
-            : this.plural
-            ? 'contain'
-            : 'contains'
-        } "${value}"`,
+        messages.fieldContains({
+          name: this.name,
+          plural: this.plural,
+          negated,
+          value: `"${value}"`,
+        }),
       filter: (object) => object?.[this.property]?.includes(value) ?? false,
     };
   }
   '='(value) {
     return {
       describe: (negated) =>
-        `${this.name} ${
-          negated
-            ? this.plural
-              ? 'do not equal'
-              : 'does not equal'
-            : this.plural
-            ? 'equal'
-            : 'equals'
-        } "${value}"`,
+        messages.fieldEquals({
+          name: this.name,
+          plural: this.plural,
+          negated,
+          value: `"${value}"`,
+        }),
       filter: (object) => object?.[this.property] === value,
     };
   }
@@ -97,18 +92,15 @@ export class NumberPropertyField {
   ':'(value) {
     value = Number(value);
     if (Number.isNaN(value))
-      throw new TypeError(`expected a number, not "${value}"`);
+      throw new TypeError(messages.errorWrongType({ type: 'number', value }));
     return {
       describe: (negated) =>
-        `${this.name} ${
-          negated
-            ? this.plural
-              ? 'do not equal'
-              : 'does not equal'
-            : this.plural
-            ? 'equal'
-            : 'equals'
-        } ${value}`,
+        messages.fieldEquals({
+          name: this.name,
+          plural: this.plural,
+          value,
+          negated,
+        }),
       filter: (object) => object?.[this.property] === value,
     };
   }

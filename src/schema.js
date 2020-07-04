@@ -1,5 +1,6 @@
 import { Parser } from './grammar.js';
 import { GenericFieldHandler } from './fields.js';
+import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {
   constructor(astNode) {
@@ -12,9 +13,10 @@ export class Schema {
     parser = new Parser(),
     fieldHandler = new GenericFieldHandler(),
     descriptors: {
-      conjunction = (left, right) => `${left} and ${right}`,
-      disjunction = (left, right) => `${left} or ${right}`,
-      parenthetical = (expression) => `(${expression})`,
+      conjunction = ({ left, right }) => messages.conjunction({ left, right }),
+      disjunction = ({ left, right }) => messages.disjunction({ left, right }),
+      parenthetical = ({ expression }) =>
+        messages.parenthetical({ expression }),
     } = {},
   } = {}) {
     this.parser = parser;
@@ -27,23 +29,23 @@ export class Schema {
   describeNode(astNode, negated = false) {
     switch (astNode.name) {
       case 'And':
-        return this.descriptors.conjunction(
-          this.describeNode(astNode.value[0]),
-          this.describeNode(astNode.value[1])
-        );
+        return this.descriptors.conjunction({
+          left: this.describeNode(astNode.value[0]),
+          right: this.describeNode(astNode.value[1]),
+        });
       case 'Or':
-        return this.descriptors.disjunction(
-          this.describeNode(astNode.value[0]),
-          this.describeNode(astNode.value[1])
-        );
+        return this.descriptors.disjunction({
+          left: this.describeNode(astNode.value[0]),
+          right: this.describeNode(astNode.value[1]),
+        });
       case 'Not':
         return this.describeNode(astNode.value, !negated);
       case 'Nil':
         return '';
       case 'Parenthetical':
-        return this.descriptors.parenthetical(
-          this.describeNode(astNode.value, negated)
-        );
+        return this.descriptors.parenthetical({
+          expression: this.describeNode(astNode.value, negated),
+        });
       case 'Term':
         return this.fieldHandler.get(...astNode.value).describe(negated);
       default:
