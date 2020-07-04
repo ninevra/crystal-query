@@ -2,7 +2,7 @@ import {
   StringPropertyField,
   NumberPropertyField,
   FieldHandler,
-  Status,
+  Status
 } from './fields.js';
 import test from 'ava';
 
@@ -11,7 +11,7 @@ test.beforeEach((t) => {
   t.context.number = new NumberPropertyField('a number', false, 'prop');
   t.context.handler = new FieldHandler({
     string: t.context.string,
-    number: t.context.number,
+    number: t.context.number
   });
 });
 
@@ -104,13 +104,13 @@ test('FieldHandler returns appropriate error on missing fields', (t) => {
   const handler = t.context.handler;
   t.like(handler.get('absent', '=', '5'), {
     status: Status.ERROR,
-    error: 'unknown field "absent"',
+    error: 'unknown field "absent"'
   });
 });
 
 test('FieldHandler returns appropriate error on missing operators', (t) => {
   t.like(t.context.handler.get('string', '>', 'blah'), {
     status: Status.ERROR,
-    error: 'can\'t use ">" on field "string"',
+    error: 'can\'t use ">" on field "string"'
   });
 });

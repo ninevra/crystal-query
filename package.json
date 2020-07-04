@@ -29,6 +29,7 @@
     "snapshotDir": "snapshots"
   },
   "prettier": {
-    "singleQuote": true
+    "singleQuote": true,
+    "trailingComma": "none"
   }
 }

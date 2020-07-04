@@ -2,7 +2,7 @@ import * as messages from './messages.js';
 
 export const Status = {
   SUCCESS: Symbol.for('query-filter.field-status.success'),
-  ERROR: Symbol.for('query-filter.field-status.error'),
+  ERROR: Symbol.for('query-filter.field-status.error')
 };
 
 export class GenericFieldHandler {
@@ -11,7 +11,7 @@ export class GenericFieldHandler {
       status: Status.SUCCESS,
       describe: (negated) =>
         messages.fieldGeneric({ name, operator, value, negated }),
-      filter: () => true,
+      filter: () => true
     };
   }
 }
@@ -22,8 +22,8 @@ export class FieldHandler {
     {
       errors: {
         missingField = messages.errorMissingField,
-        missingOperator = messages.errorMissingOperator,
-      } = {},
+        missingOperator = messages.errorMissingOperator
+      } = {}
     } = {}
   ) {
     this.fields = fields;
@@ -33,12 +33,12 @@ export class FieldHandler {
     if (!this.fields[name]) {
       return {
         status: Status.ERROR,
-        error: this.errorDesciptors.missingField({ name }),
+        error: this.errorDesciptors.missingField({ name })
       };
     } else if (!this.fields[name][operator]) {
       return {
         status: Status.ERROR,
-        error: this.errorDesciptors.missingOperator({ name, operator }),
+        error: this.errorDesciptors.missingOperator({ name, operator })
       };
     } else {
       try {
@@ -62,21 +62,21 @@ export class StringPropertyField {
       name: this.name,
       plural: this.plural,
       negated,
-      value: `"${value}"`,
+      value: `"${value}"`
     };
   }
   ':'(value) {
     return {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property]?.includes(value) ?? false,
+      filter: (object) => object?.[this.property]?.includes(value) ?? false
     };
   }
   '='(value) {
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] === value,
+      filter: (object) => object?.[this.property] === value
     };
   }
 }
@@ -104,7 +104,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] === value,
+      filter: (object) => object?.[this.property] === value
     };
   }
   '>'(value) {
@@ -112,7 +112,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterThan(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] > value,
+      filter: (object) => object?.[this.property] > value
     };
   }
   '>='(value) {
@@ -120,7 +120,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterOrEqual(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] >= value,
+      filter: (object) => object?.[this.property] >= value
     };
   }
   '<='(value) {
@@ -128,7 +128,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessOrEqual(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] <= value,
+      filter: (object) => object?.[this.property] <= value
     };
   }
   '<'(value) {
@@ -136,7 +136,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessThan(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] < value,
+      filter: (object) => object?.[this.property] < value
     };
   }
 }

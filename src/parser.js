@@ -10,7 +10,7 @@ export class Parser {
   constructor({
     operators = [':', '>=', '<=', '<', '=', '>'],
     conjunctionMsg = ({ left, right }) => `${left} and ${right}`,
-    disjunctionMsg = ({ left, right }) => `${left} or ${right}`,
+    disjunctionMsg = ({ left, right }) => `${left} or ${right}`
   } = {}) {
     this.conjunctionMsg = conjunctionMsg;
     this.disjunctionMsg = disjunctionMsg;
@@ -90,7 +90,7 @@ export class Parser {
         ),
       expression: (l) =>
         parsimmon.alt(l.list, parsimmon.optWhitespace.node('Nil')),
-      query: (l) => l.expression,
+      query: (l) => l.expression
     });
   }
 

@@ -15,9 +15,8 @@ export class Schema {
     descriptors: {
       conjunction = ({ left, right }) => messages.conjunction({ left, right }),
       disjunction = ({ left, right }) => messages.disjunction({ left, right }),
-      parenthetical = ({ expression }) =>
-        messages.parenthetical({ expression }),
-    } = {},
+      parenthetical = ({ expression }) => messages.parenthetical({ expression })
+    } = {}
   } = {}) {
     this.parser = parser;
     this.fieldHandler = fieldHandler;
@@ -31,12 +30,12 @@ export class Schema {
       case 'And':
         return this.descriptors.conjunction({
           left: this.describeNode(astNode.value[0]),
-          right: this.describeNode(astNode.value[1]),
+          right: this.describeNode(astNode.value[1])
         });
       case 'Or':
         return this.descriptors.disjunction({
           left: this.describeNode(astNode.value[0]),
-          right: this.describeNode(astNode.value[1]),
+          right: this.describeNode(astNode.value[1])
         });
       case 'Not':
         return this.describeNode(astNode.value, !negated);
@@ -44,7 +43,7 @@ export class Schema {
         return '';
       case 'Parenthetical':
         return this.descriptors.parenthetical({
-          expression: this.describeNode(astNode.value, negated),
+          expression: this.describeNode(astNode.value, negated)
         });
       case 'Term':
         return this.fieldHandler.get(...astNode.value).describe(negated);

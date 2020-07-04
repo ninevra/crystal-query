@@ -50,8 +50,8 @@ test('language.term recognizes terms', (t) => {
       name: 'Term',
       value: ['', '', 'foo'],
       start: { offset: 0, line: 1, column: 1 },
-      end: { offset: 3, line: 1, column: 4 },
-    },
+      end: { offset: 3, line: 1, column: 4 }
+    }
   });
   t.deepEqual(term.parse('foo:bar'), {
     status: true,
@@ -59,19 +59,19 @@ test('language.term recognizes terms', (t) => {
       name: 'Term',
       value: ['foo', ':', 'bar'],
       start: { offset: 0, line: 1, column: 1 },
-      end: { offset: 7, line: 1, column: 8 },
-    },
+      end: { offset: 7, line: 1, column: 8 }
+    }
   });
   t.like(term.parse('>2'), {
     status: true,
     value: {
       name: 'Term',
-      value: ['', '>', '2'],
-    },
+      value: ['', '>', '2']
+    }
   });
   t.like(term.parse('foo:"bar"'), {
     status: true,
-    value: { name: 'Term', value: ['foo', ':', 'bar'] },
+    value: { name: 'Term', value: ['foo', ':', 'bar'] }
   });
 });
 
@@ -89,9 +89,9 @@ test('language.negation recognizes negations', (t) => {
       name: 'Not',
       value: {
         name: 'Term',
-        value: ['', '', 'foo'],
-      },
-    },
+        value: ['', '', 'foo']
+      }
+    }
   });
   t.like(negation.parse('not not foo'), {
     status: true,
@@ -101,14 +101,14 @@ test('language.negation recognizes negations', (t) => {
         name: 'Not',
         value: {
           name: 'Term',
-          value: ['', '', 'foo'],
-        },
-      },
-    },
+          value: ['', '', 'foo']
+        }
+      }
+    }
   });
   t.like(negation.parse('not"foo"'), {
     status: true,
-    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } },
+    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } }
   });
 });
 
@@ -118,8 +118,8 @@ test('language.negation recognizes "nota" as a term, not a negation', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['', '', 'nota'],
-    },
+      value: ['', '', 'nota']
+    }
   });
 });
 
@@ -129,22 +129,22 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
     status: true,
     value: {
       name: 'Term',
-      value: ['foo', ':', 'bar'],
-    },
+      value: ['foo', ':', 'bar']
+    }
   });
   t.like(conjunction.parse('not foo'), {
     status: true,
-    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } },
+    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } }
   });
   let result = conjunction.parse('not foo and not bar');
   t.like(result, { status: true, value: { name: 'And' } });
   t.like(result.value.value[0], {
     name: 'Not',
-    value: { name: 'Term', value: ['', '', 'foo'] },
+    value: { name: 'Term', value: ['', '', 'foo'] }
   });
   t.like(result.value.value[1], {
     name: 'Not',
-    value: { name: 'Term', value: ['', '', 'bar'] },
+    value: { name: 'Term', value: ['', '', 'bar'] }
   });
 });
 
@@ -154,8 +154,8 @@ test('language.disjunction recognizes terms, disjunctions', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['foo', ':', 'bar'],
-    },
+      value: ['foo', ':', 'bar']
+    }
   });
   let result = disjunction.parse('a or b');
   t.like(result, { status: true, value: { name: 'Or' } });
@@ -169,7 +169,7 @@ test('language.disjunction places "and" at higher precedence than "or"', (t) => 
   t.like(result, { status: true, value: { name: 'Or' } });
   t.like(result.value.value[0], {
     name: 'Not',
-    value: { name: 'Term', value: ['', '', 'a'] },
+    value: { name: 'Term', value: ['', '', 'a'] }
   });
   t.like(result.value.value[1], { name: 'And' });
 });
@@ -189,11 +189,11 @@ test('language.list has lower precedence than "or"', (t) => {
   t.like(result.value.value[0], { name: 'Or' });
   t.like(result.value.value[0].value[0], {
     name: 'Term',
-    value: ['', '', 'a'],
+    value: ['', '', 'a']
   });
   t.like(result.value.value[0].value[1], {
     name: 'Term',
-    value: ['', '', 'b'],
+    value: ['', '', 'b']
   });
   t.like(result.value.value[1], { name: 'Term', value: ['', '', 'c'] });
 });
@@ -203,7 +203,7 @@ test('language.parenthetical recognizes parenthetical expressions', (t) => {
   let result = parenthetical.parse('(a b)');
   t.like(result, {
     status: true,
-    value: { name: 'Parenthetical', value: { name: 'And' } },
+    value: { name: 'Parenthetical', value: { name: 'And' } }
   });
 });
 
@@ -213,7 +213,7 @@ test('language.parenthetical has higher precedence than "and"', (t) => {
   t.like(result, { status: true, value: { name: 'And' } });
   t.like(result.value.value[0], {
     name: 'Parenthetical',
-    value: { name: 'Or' },
+    value: { name: 'Or' }
   });
   t.like(result.value.value[1], { name: 'Term', value: ['', '', 'c'] });
 });
@@ -229,6 +229,6 @@ test('empty expressions', (t) => {
   result = expression.parse('not ()');
   t.like(result, {
     status: true,
-    value: { name: 'Not', value: { name: 'Parenthetical' } },
+    value: { name: 'Not', value: { name: 'Parenthetical' } }
   });
 });
