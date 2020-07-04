@@ -56,7 +56,7 @@ export class StringPropertyField {
     this.plural = plural;
     this.property = property;
   }
-  [':'](value) {
+  ':'(value) {
     return {
       describe: (negated) =>
         `${this.name} ${
@@ -71,7 +71,7 @@ export class StringPropertyField {
       filter: (object) => object?.[this.property]?.includes(value) ?? false,
     };
   }
-  ['='](value) {
+  '='(value) {
     return {
       describe: (negated) =>
         `${this.name} ${
@@ -94,7 +94,7 @@ export class NumberPropertyField {
     this.plural = plural;
     this.property = property;
   }
-  [':'](value) {
+  ':'(value) {
     value = Number(value);
     if (Number.isNaN(value))
       throw new TypeError(`expected a number, not "${value}"`);
