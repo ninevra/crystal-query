@@ -11,7 +11,26 @@ export class GenericFieldHandler {
       status: Status.SUCCESS,
       describe: (negated) =>
         messages.fieldGeneric({ name, operator, value, negated }),
-      filter: () => true
+      filter: (input) => {
+        if (name !== '') input = input?.[name];
+        switch (operator) {
+          case '':
+          case ':':
+            return input?.includes?.(value) ?? false;
+          case '>':
+            return input > value;
+          case '>=':
+            return input >= value;
+          case '=':
+            return input == value;
+          case '<=':
+            return input <= value;
+          case '<':
+            return input < value;
+          default:
+            return false;
+        }
+      }
     };
   }
 }

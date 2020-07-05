@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "test": "c8 ava",
+    "test:debug": "ava debug --break",
     "format": "prettier --write .",
     "format:watch": "onchange '**/*.js' -- prettier --write {{changed}}",
     "snaps:update": "ava --update-snapshots"

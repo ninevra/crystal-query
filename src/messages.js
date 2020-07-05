@@ -1,5 +1,5 @@
 export function fieldGeneric({ name, operator, value, negated }) {
-  return `${negated ? 'not ' : ''}${name}${operator}${value}`;
+  return `${negated ? 'not ' : ''}${name}${operator}"${value}"`;
 }
 
 export function conjunction({ left, right }) {
@@ -10,8 +10,8 @@ export function disjunction({ left, right }) {
   return `${left} or ${right}`;
 }
 
-export function parenthetical({ expression }) {
-  return `(${expression})`;
+export function parenthetical({ expression, negated }) {
+  return `${negated ? 'not ' : ''}(${expression})`;
 }
 
 export function fieldContains({ name, plural, value, negated }) {

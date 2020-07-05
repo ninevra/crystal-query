@@ -1,5 +1,5 @@
 import { Parser } from './parser.js';
-import { GenericFieldHandler } from './fields.js';
+import { GenericFieldHandler, Status } from './fields.js';
 import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {
@@ -15,12 +15,32 @@ export class Schema {
     descriptors: {
       conjunction = ({ left, right }) => messages.conjunction({ left, right }),
       disjunction = ({ left, right }) => messages.disjunction({ left, right }),
-      parenthetical = ({ expression }) => messages.parenthetical({ expression })
+      parenthetical = ({ expression, negated }) =>
+        messages.parenthetical({ expression, negated })
     } = {}
   } = {}) {
     this.parser = new Parser({ operators });
     this.fieldHandler = fieldHandler;
     this.descriptors = { conjunction, disjunction, parenthetical };
+  }
+  process(query) {
+    const parsed = this.parse(query);
+    if (parsed.status) {
+      parsed.description = this.describeNode(parsed.ast);
+      parsed.evaluate = this.evaluateNode(parsed.ast);
+    }
+    return parsed;
+  }
+  parse(query) {
+    let { status, value: ast, expected } = this.parser.parse(query);
+    let errors;
+    if (status) {
+      errors = this.validateNode(ast);
+      status = errors.length === 0;
+    } else {
+      errors = [`syntax error: expected [${expected.join(', ')}]`];
+    }
+    return { status, errors, ast };
   }
   describe(query) {
     return this.describeNode(this.parser.parse(query).value);
@@ -43,7 +63,8 @@ export class Schema {
         return '';
       case 'Parenthetical':
         return this.descriptors.parenthetical({
-          expression: this.describeNode(astNode.value, negated)
+          expression: this.describeNode(astNode.value),
+          negated
         });
       case 'Term':
         return this.fieldHandler.get(...astNode.value).describe(negated);
@@ -55,17 +76,19 @@ export class Schema {
     switch (astNode.name) {
       case 'And':
       case 'Or':
-        return (
-          this.validateNode(astNode.value[0]) &&
-          this.validateNode(astNode.value[1])
-        );
+        return [
+          ...this.validateNode(astNode.value[0]),
+          ...this.validateNode(astNode.value[1])
+        ];
       case 'Not':
       case 'Parenthetical':
         return this.validateNode(astNode.value);
       case 'Nil':
-        return true;
-      case 'Term':
-        return false; // TODO: implement or remove
+        return [];
+      case 'Term': {
+        const { status, error } = this.fieldHandler.get(...astNode.value);
+        return status === Status.SUCCESS ? [] : [error];
+      }
       default:
         throw new InvalidNodeError(astNode);
     }
