@@ -6,7 +6,7 @@ export class GenericTermHandler {
     return {
       status: TermStatus.SUCCESS,
       describe: (negated) => fieldGeneric({ name, operator, value, negated }),
-      filter: (input) => {
+      predicate: (input) => {
         if (name !== '') input = input?.[name];
         switch (operator) {
           case '':

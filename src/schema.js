@@ -116,7 +116,7 @@ export class Schema {
         return (value) => !child(value);
       }
       case 'Term':
-        return this.termHandler.get(...astNode.value).filter;
+        return this.termHandler.get(...astNode.value).predicate;
       case 'Nil':
         return () => false;
       case 'Parenthetical': {

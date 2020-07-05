@@ -21,7 +21,7 @@ export class StringPropertyField {
     return {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
-      filter: (object) => {
+      predicate: (object) => {
         let actual = object?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
         return actual?.includes?.(value) ?? false;
@@ -33,7 +33,7 @@ export class StringPropertyField {
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      filter: (object) => {
+      predicate: (object) => {
         let actual = object?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
         return actual === value;

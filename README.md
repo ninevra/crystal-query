@@ -99,11 +99,11 @@ A `TermHandler` describes the semantics of terms in the query. Two implementatio
 
 #### TermHandler.get(name: string, operator: string, value: string)
 
-Returns an object `{describe, evaluate}`.
+Returns an object `{describe, predicate}`.
 
 `describe` is a function `(negated: boolean) => Description`. `Description` can be any type, so long as it is used consistently by the `descriptors` of the containing `Schema`; by default, `Description` is `string`.
 
-`evaluate` is a function `(value: any) => boolean`. `evaluate(value)` should return `true` if `value` matches the term and `false` otherwise.
+`predicate` is a function `(value: any) => boolean`. `predicate(value)` should return `true` if `value` matches the term and `false` otherwise.
 
 ### class GenericTermHandler
 

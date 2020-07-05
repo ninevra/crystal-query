@@ -8,17 +8,17 @@ test.beforeEach((t) => {
 test('NumberPropertyField supports ":"', (t) => {
   const field = t.context.number[':']('-4.5');
   t.is(field.describe(), 'a number equals -4.5');
-  t.true(field.filter({ prop: -4.5 }));
-  t.false(field.filter({ prop: 4.5 }));
-  t.false(field.filter({ foo: -4.5 }));
+  t.true(field.predicate({ prop: -4.5 }));
+  t.false(field.predicate({ prop: 4.5 }));
+  t.false(field.predicate({ foo: -4.5 }));
 });
 
 test('NumberPropertyField supports "="', (t) => {
   const field = t.context.number['=']('-4.5');
   t.is(field.describe(), 'a number equals -4.5');
-  t.true(field.filter({ prop: -4.5 }));
-  t.false(field.filter({ prop: 4.5 }));
-  t.false(field.filter({ foo: -4.5 }));
+  t.true(field.predicate({ prop: -4.5 }));
+  t.false(field.predicate({ prop: 4.5 }));
+  t.false(field.predicate({ foo: -4.5 }));
 });
 
 test.todo('NumberPropertyField pluralization');
@@ -28,35 +28,35 @@ test.todo('NumberPropertyField rejects non-number queries');
 test('NumberPropertyField supports ">"', (t) => {
   const field = t.context.number['>'](-4.5);
   t.is(field.describe(), 'a number is greater than -4.5');
-  t.true(field.filter({ prop: -4 }));
-  t.false(field.filter({ prop: -4.5 }));
-  t.false(field.filter({ prop: -5 }));
-  t.false(field.filter({ foo: -4 }));
+  t.true(field.predicate({ prop: -4 }));
+  t.false(field.predicate({ prop: -4.5 }));
+  t.false(field.predicate({ prop: -5 }));
+  t.false(field.predicate({ foo: -4 }));
 });
 
 test('NumberPropertyField supports ">="', (t) => {
   const field = t.context.number['>='](-4.5);
   t.is(field.describe(), 'a number is at least -4.5');
-  t.true(field.filter({ prop: -4 }));
-  t.true(field.filter({ prop: -4.5 }));
-  t.false(field.filter({ prop: -5 }));
-  t.false(field.filter({ foo: -4 }));
+  t.true(field.predicate({ prop: -4 }));
+  t.true(field.predicate({ prop: -4.5 }));
+  t.false(field.predicate({ prop: -5 }));
+  t.false(field.predicate({ foo: -4 }));
 });
 
 test('NumberPropertyField supports "<="', (t) => {
   const field = t.context.number['<='](-4.5);
   t.is(field.describe(), 'a number is at most -4.5');
-  t.false(field.filter({ prop: -4 }));
-  t.true(field.filter({ prop: -4.5 }));
-  t.true(field.filter({ prop: -5 }));
-  t.false(field.filter({ foo: -5 }));
+  t.false(field.predicate({ prop: -4 }));
+  t.true(field.predicate({ prop: -4.5 }));
+  t.true(field.predicate({ prop: -5 }));
+  t.false(field.predicate({ foo: -5 }));
 });
 
 test('NumberPropertyField supports "<"', (t) => {
   const field = t.context.number['<'](-4.5);
   t.is(field.describe(), 'a number is less than -4.5');
-  t.false(field.filter({ prop: -4 }));
-  t.false(field.filter({ prop: -4.5 }));
-  t.true(field.filter({ prop: -5 }));
-  t.false(field.filter({ foo: -5 }));
+  t.false(field.predicate({ prop: -4 }));
+  t.false(field.predicate({ prop: -4.5 }));
+  t.true(field.predicate({ prop: -5 }));
+  t.false(field.predicate({ foo: -5 }));
 });
