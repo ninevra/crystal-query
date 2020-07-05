@@ -1,5 +1,6 @@
 import { Parser } from './parser.js';
-import { GenericTermHandler, Status } from './fields.js';
+import { GenericTermHandler } from './GenericTermHandler.js';
+import { Status } from './termStatus.js';
 import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {

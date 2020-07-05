@@ -1,9 +1,8 @@
-import {
-  StringPropertyField,
-  NumberPropertyField,
-  FieldTermHandler,
-  Status
-} from './fields.js';
+import { StringPropertyField } from './StringPropertyField.js';
+import { NumberPropertyField } from './NumberPropertyField.js';
+import { FieldTermHandler } from './FieldTermHandler.js';
+import { Status } from './termStatus.js';
+
 import test from 'ava';
 
 test.beforeEach((t) => {
