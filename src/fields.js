@@ -71,10 +71,11 @@ export class FieldTermHandler {
 }
 
 export class StringPropertyField {
-  constructor(name, plural, property) {
+  constructor(name, plural, property, { caseSensitive = true } = {}) {
     this.name = name;
     this.plural = plural;
     this.property = property;
+    this.caseSensitive = caseSensitive;
   }
   makeMessageArg({ value, negated }) {
     return {
@@ -85,17 +86,27 @@ export class StringPropertyField {
     };
   }
   ':'(value) {
+    value = this.caseSensitive ? value : value.toUpperCase();
     return {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property]?.includes?.(value) ?? false
+      filter: (object) => {
+        let actual = object?.[this.property];
+        if (!this.caseSensitive) actual = actual?.toUpperCase?.();
+        return actual?.includes?.(value) ?? false;
+      }
     };
   }
   '='(value) {
+    value = this.caseSensitive ? value : value.toUpperCase();
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property] === value
+      filter: (object) => {
+        let actual = object?.[this.property];
+        if (!this.caseSensitive) actual = actual?.toUpperCase?.();
+        return actual === value;
+      }
     };
   }
 }

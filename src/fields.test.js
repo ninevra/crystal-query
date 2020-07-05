@@ -31,6 +31,17 @@ test('StringPropertyField supports "="', (t) => {
   t.false(field.filter({ foo: 'foobarbaz' }));
 });
 
+test('StringPropertyField caseSensitive', (t) => {
+  const sensitive = new StringPropertyField('some field', false, 'foo');
+  t.false(sensitive['=']('bar').filter({ foo: 'BaR' }));
+  t.false(sensitive[':']('bar').filter({ foo: 'BaRBaZ' }));
+  const insensitive = new StringPropertyField('some field', false, 'foo', {
+    caseSensitive: false
+  });
+  t.true(insensitive['=']('bar').filter({ foo: 'BaR' }));
+  t.true(insensitive[':']('bar').filter({ foo: 'BaRBaZ' }));
+});
+
 test.todo('StringPropertyField pluralization');
 test.todo('StringPropertyField negation');
 
