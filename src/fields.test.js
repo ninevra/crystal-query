@@ -42,26 +42,6 @@ test('StringPropertyField caseSensitive', (t) => {
   t.true(insensitive[':']('bar').filter({ foo: 'BaRBaZ' }));
 });
 
-test('StringPropertyField supports arbitrary extractors', (t) => {
-  const field = new StringPropertyField(
-    'some field',
-    false,
-    (input) => input.bar + 'baz'
-  );
-  t.true(field['=']('foobaz').filter({ bar: 'foo' }));
-  // TODO: test all operators...
-});
-
-test('NumberPropertyField supports arbitrary extractors', (t) => {
-  const field = new NumberPropertyField(
-    'a number',
-    false,
-    (input) => input.bar + 3
-  );
-  t.true(field['=']('6').filter({ bar: 3 }));
-  // TODO: test all operators...
-});
-
 test.todo('StringPropertyField pluralization');
 test.todo('StringPropertyField negation');
 

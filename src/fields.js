@@ -71,14 +71,10 @@ export class FieldTermHandler {
 }
 
 export class StringPropertyField {
-  constructor(name, plural, extractor, { caseSensitive = true } = {}) {
+  constructor(name, plural, property, { caseSensitive = true } = {}) {
     this.name = name;
     this.plural = plural;
-    if (typeof extractor === 'function') {
-      this.extractor = extractor;
-    } else {
-      this.extractor = (value) => value?.[extractor];
-    }
+    this.property = property;
     this.caseSensitive = caseSensitive;
   }
   makeMessageArg({ value, negated }) {
@@ -95,7 +91,7 @@ export class StringPropertyField {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
       filter: (object) => {
-        let actual = this.extractor(object);
+        let actual = object?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
         return actual?.includes?.(value) ?? false;
       }
@@ -107,7 +103,7 @@ export class StringPropertyField {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
       filter: (object) => {
-        let actual = this.extractor(object);
+        let actual = object?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
         return actual === value;
       }
@@ -125,14 +121,10 @@ function assertCastNumber(value) {
 }
 
 export class NumberPropertyField {
-  constructor(name, plural, extractor) {
+  constructor(name, plural, property) {
     this.name = name;
     this.plural = plural;
-    if (typeof extractor === 'function') {
-      this.extractor = extractor;
-    } else {
-      this.extractor = (value) => value?.[extractor];
-    }
+    this.property = property;
   }
   makeMessageArg({ value, negated }) {
     return { name: this.name, plural: this.plural, value, negated };
@@ -142,7 +134,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      filter: (object) => this.extractor(object) === value
+      filter: (object) => object?.[this.property] === value
     };
   }
   '>'(value) {
@@ -150,7 +142,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterThan(this.makeMessageArg({ value, negated })),
-      filter: (object) => this.extractor(object) > value
+      filter: (object) => object?.[this.property] > value
     };
   }
   '>='(value) {
@@ -158,7 +150,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterOrEqual(this.makeMessageArg({ value, negated })),
-      filter: (object) => this.extractor(object) >= value
+      filter: (object) => object?.[this.property] >= value
     };
   }
   '<='(value) {
@@ -166,7 +158,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessOrEqual(this.makeMessageArg({ value, negated })),
-      filter: (object) => this.extractor(object) <= value
+      filter: (object) => object?.[this.property] <= value
     };
   }
   '<'(value) {
@@ -174,7 +166,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessThan(this.makeMessageArg({ value, negated })),
-      filter: (object) => this.extractor(object) < value
+      filter: (object) => object?.[this.property] < value
     };
   }
 }
