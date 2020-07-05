@@ -2,8 +2,8 @@ import { Schema } from './schema.js';
 import { Parser } from './parser.js';
 import {
   FieldTermHandler,
-  StringPropertyField,
-  NumberPropertyField
+  StringField,
+  NumberField
 } from './fields.js';
 import * as messages from './messages.js';
 import test from 'ava';
@@ -57,8 +57,8 @@ test('parse() returns syntax error on invalid fields', (t) => {
 test('parse() returns field error on unsupported fields or operators', (t) => {
   const schema = new Schema({
     termHandler: new FieldTermHandler({
-      foo: new StringPropertyField('foo', false, 'foo'),
-      bar: new NumberPropertyField('bar', false, 'bar')
+      foo: new StringField('foo', false, 'foo'),
+      bar: new NumberField('bar', false, 'bar')
     })
   });
   t.like(schema.parse('foo>bar <2 bar:baz baz:foo'), {

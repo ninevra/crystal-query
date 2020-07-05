@@ -70,7 +70,7 @@ export class FieldTermHandler {
   }
 }
 
-export class StringPropertyField {
+export class StringField {
   constructor(name, plural, extractor, { caseSensitive = true } = {}) {
     this.name = name;
     this.plural = plural;
@@ -124,7 +124,7 @@ function assertCastNumber(value) {
   }
 }
 
-export class NumberPropertyField {
+export class NumberField {
   constructor(name, plural, extractor) {
     this.name = name;
     this.plural = plural;
@@ -178,4 +178,4 @@ export class NumberPropertyField {
     };
   }
 }
-NumberPropertyField.prototype['='] = NumberPropertyField.prototype[':'];
+NumberField.prototype['='] = NumberField.prototype[':'];
