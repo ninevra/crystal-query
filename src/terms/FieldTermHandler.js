@@ -1,5 +1,5 @@
 import { TermStatus } from './TermStatus.js';
-import * as messages from './messages.js';
+import * as messages from '../messages.js';
 
 export class FieldTermHandler {
   constructor(

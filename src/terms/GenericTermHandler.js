@@ -1,5 +1,5 @@
 import { TermStatus } from './TermStatus.js';
-import { fieldGeneric } from './messages.js';
+import { fieldGeneric } from '../messages.js';
 
 export class GenericTermHandler {
   get(name, operator, value) {

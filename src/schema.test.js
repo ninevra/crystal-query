@@ -1,8 +1,8 @@
 import { Schema } from './schema.js';
 import { Parser } from './parser.js';
-import { StringPropertyField } from './StringPropertyField.js';
-import { NumberPropertyField } from './NumberPropertyField.js';
-import { FieldTermHandler } from './FieldTermHandler.js';
+import { StringPropertyField } from './terms/StringPropertyField.js';
+import { NumberPropertyField } from './terms/NumberPropertyField.js';
+import { FieldTermHandler } from './terms/FieldTermHandler.js';
 import * as messages from './messages.js';
 import test from 'ava';
 
