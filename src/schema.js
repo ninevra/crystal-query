@@ -104,16 +104,16 @@ export class Schema {
       case 'And': {
         const left = this.evaluateNode(astNode.value[0]);
         const right = this.evaluateNode(astNode.value[1]);
-        return (value) => left(value) && right(value);
+        return (input) => left(input) && right(input);
       }
       case 'Or': {
         const left = this.evaluateNode(astNode.value[0]);
         const right = this.evaluateNode(astNode.value[1]);
-        return (value) => left(value) || right(value);
+        return (input) => left(input) || right(input);
       }
       case 'Not': {
         const child = this.evaluateNode(astNode.value);
-        return (value) => !child(value);
+        return (input) => !child(input);
       }
       case 'Term':
         return this.termHandler.get(...astNode.value).predicate;
@@ -121,7 +121,7 @@ export class Schema {
         return () => false;
       case 'Parenthetical': {
         const child = this.evaluateNode(astNode.value);
-        return (value) => child(value);
+        return (input) => child(input);
       }
       default:
         throw new InvalidNodeError(astNode);

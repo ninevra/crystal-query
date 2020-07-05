@@ -24,7 +24,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
-      predicate: (object) => object?.[this.property] === value
+      predicate: (input) => input?.[this.property] === value
     };
   }
   '>'(value) {
@@ -32,7 +32,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterThan(this.makeMessageArg({ value, negated })),
-      predicate: (object) => object?.[this.property] > value
+      predicate: (input) => input?.[this.property] > value
     };
   }
   '>='(value) {
@@ -40,7 +40,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldGreaterOrEqual(this.makeMessageArg({ value, negated })),
-      predicate: (object) => object?.[this.property] >= value
+      predicate: (input) => input?.[this.property] >= value
     };
   }
   '<='(value) {
@@ -48,7 +48,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessOrEqual(this.makeMessageArg({ value, negated })),
-      predicate: (object) => object?.[this.property] <= value
+      predicate: (input) => input?.[this.property] <= value
     };
   }
   '<'(value) {
@@ -56,7 +56,7 @@ export class NumberPropertyField {
     return {
       describe: (negated) =>
         messages.fieldLessThan(this.makeMessageArg({ value, negated })),
-      predicate: (object) => object?.[this.property] < value
+      predicate: (input) => input?.[this.property] < value
     };
   }
 }

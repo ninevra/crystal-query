@@ -105,13 +105,13 @@ Returns an object `{describe, predicate}`.
 
 `describe` is a function `(negated: boolean) => Description`. `Description` can be any type, so long as it is used consistently by the `descriptors` of the containing `Schema`; by default, `Description` is `string`.
 
-`predicate` is a function `(value: any) => boolean`. `predicate(value)` should return `true` if `value` matches the term and `false` otherwise.
+`predicate` is a function `(input: any) => boolean`. `predicate(value)` should return `true` if `input` matches the term and `false` otherwise.
 
 ### class GenericTermHandler
 
 `GenericTermHandler` is meant to provide reasonable starting behavior when setting up `query-filter`. Most applications will want to configure and use a `FieldTermHandler` instead.
 
-A `GenericTermHandler` maps non-empty field names to properties of the input value. It accepts all possible fields, but understands only the default operators, and mostly gives them their default behavior in javascript; so, for example, the term `foo>=3` is translated to `(value) => value?.foo >= '3'`. The operator `=` is translated to `==`. The operator `:` is translated to `includes()`, e.g. `foo:3` to `(value) => value?.includes?.('3')`. Operators outside of the default list produce fields that always evaluate to false.
+A `GenericTermHandler` maps non-empty field names to properties of the input value. It accepts all possible fields, but understands only the default operators, and mostly gives them their default behavior in javascript; so, for example, the term `foo>=3` is translated to `(input) => input?.foo >= '3'`. The operator `=` is translated to `==`. The operator `:` is translated to `includes()`, e.g. `foo:3` to `(input) => input?.includes?.('3')`. Operators outside of the default list produce fields that always evaluate to false.
 
 ### class FieldTermHandler
 
