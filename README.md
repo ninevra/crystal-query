@@ -7,12 +7,14 @@ A simple query language with configurable semantics.
 ```javascript
 import { Schema } from 'query-filter';
 
-const { description, evaluate } = new Schema().query('foo>3 bar:"lorem ipsum"');
+const { description, predicate } = new Schema().query(
+  'foo>3 bar:"lorem ipsum"'
+);
 
 console.log(description);
 // 'foo is greater than 3 and bar contains "lorem ipsum"'
 
-if (evaluate({ foo: 4, bar: 'lorem ipsum dolor sic amet' })) {
+if (predicate({ foo: 4, bar: 'lorem ipsum dolor sic amet' })) {
   console.log('found a match!');
 }
 ```

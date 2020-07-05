@@ -14,8 +14,8 @@ test('describe() renders query descriptions', (t) => {
 
 test('evaluate() returns a function', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const filter = new Schema().evaluate(query);
-  t.is(typeof filter, 'function');
+  const predicate = new Schema().evaluate(query);
+  t.is(typeof predicate, 'function');
 });
 
 test('parse() returns parsed ast on success', (t) => {
@@ -80,13 +80,13 @@ test('process() returns all applicable of ast, description, evaluator, errors', 
     description: 'not ("a" or b:"c d") and e>"3"',
     errors: []
   });
-  t.true(result.evaluate({ e: 4, b: NaN }));
-  t.false(result.evaluate(['a']));
+  t.true(result.predicate({ e: 4, b: NaN }));
+  t.false(result.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';
   result = schema.process(query);
   assertSyntaxError(t, result);
   t.is(result.ast, undefined);
   t.is(result.description, undefined);
-  t.is(result.evaluate, undefined);
+  t.is(result.predicate, undefined);
 });

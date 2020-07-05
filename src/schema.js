@@ -28,7 +28,7 @@ export class Schema {
     const parsed = this.parse(query);
     if (parsed.status) {
       parsed.description = this.describeNode(parsed.ast);
-      parsed.evaluate = this.evaluateNode(parsed.ast);
+      parsed.predicate = this.evaluateNode(parsed.ast);
     }
     return parsed;
   }
