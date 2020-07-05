@@ -1,22 +1,22 @@
 import {
-  StringField,
-  NumberField,
+  StringPropertyField,
+  NumberPropertyField,
   FieldTermHandler,
   Status
 } from './fields.js';
 import test from 'ava';
 
 test.beforeEach((t) => {
-  t.context.string = new StringField('some field', false, 'foo');
-  t.context.number = new NumberField('a number', false, 'prop');
+  t.context.string = new StringPropertyField('some field', false, 'foo');
+  t.context.number = new NumberPropertyField('a number', false, 'prop');
   t.context.handler = new FieldTermHandler({
     string: t.context.string,
     number: t.context.number
   });
 });
 
-test('StringField supports ":"', (t) => {
-  const field = new StringField('some field', false, 'foo')[':']('bar');
+test('StringPropertyField supports ":"', (t) => {
+  const field = new StringPropertyField('some field', false, 'foo')[':']('bar');
   t.is(field.describe(false), 'some field contains "bar"');
   t.true(field.filter({ foo: 'bar' }));
   t.true(field.filter({ foo: 'foobarbaz' }));
@@ -24,26 +24,26 @@ test('StringField supports ":"', (t) => {
   t.false(field.filter({ baz: 'bar' }));
 });
 
-test('StringField supports "="', (t) => {
-  const field = new StringField('some field', false, 'foo')['=']('bar');
+test('StringPropertyField supports "="', (t) => {
+  const field = new StringPropertyField('some field', false, 'foo')['=']('bar');
   t.is(field.describe(false), 'some field equals "bar"');
   t.true(field.filter({ foo: 'bar' }));
   t.false(field.filter({ foo: 'foobarbaz' }));
 });
 
-test('StringField caseSensitive', (t) => {
-  const sensitive = new StringField('some field', false, 'foo');
+test('StringPropertyField caseSensitive', (t) => {
+  const sensitive = new StringPropertyField('some field', false, 'foo');
   t.false(sensitive['=']('bar').filter({ foo: 'BaR' }));
   t.false(sensitive[':']('bar').filter({ foo: 'BaRBaZ' }));
-  const insensitive = new StringField('some field', false, 'foo', {
+  const insensitive = new StringPropertyField('some field', false, 'foo', {
     caseSensitive: false
   });
   t.true(insensitive['=']('bar').filter({ foo: 'BaR' }));
   t.true(insensitive[':']('bar').filter({ foo: 'BaRBaZ' }));
 });
 
-test('StringField supports arbitrary extractors', (t) => {
-  const field = new StringField(
+test('StringPropertyField supports arbitrary extractors', (t) => {
+  const field = new StringPropertyField(
     'some field',
     false,
     (input) => input.bar + 'baz'
@@ -52,8 +52,8 @@ test('StringField supports arbitrary extractors', (t) => {
   // TODO: test all operators...
 });
 
-test('NumberField supports arbitrary extractors', (t) => {
-  const field = new NumberField(
+test('NumberPropertyField supports arbitrary extractors', (t) => {
+  const field = new NumberPropertyField(
     'a number',
     false,
     (input) => input.bar + 3
@@ -62,30 +62,30 @@ test('NumberField supports arbitrary extractors', (t) => {
   // TODO: test all operators...
 });
 
-test.todo('StringField pluralization');
-test.todo('StringField negation');
+test.todo('StringPropertyField pluralization');
+test.todo('StringPropertyField negation');
 
-test('NumberField supports ":"', (t) => {
-  const field = new NumberField('a number', false, 'prop')[':']('-4.5');
+test('NumberPropertyField supports ":"', (t) => {
+  const field = new NumberPropertyField('a number', false, 'prop')[':']('-4.5');
   t.is(field.describe(), 'a number equals -4.5');
   t.true(field.filter({ prop: -4.5 }));
   t.false(field.filter({ prop: 4.5 }));
   t.false(field.filter({ foo: -4.5 }));
 });
 
-test('NumberField supports "="', (t) => {
-  const field = new NumberField('a number', false, 'prop')['=']('-4.5');
+test('NumberPropertyField supports "="', (t) => {
+  const field = new NumberPropertyField('a number', false, 'prop')['=']('-4.5');
   t.is(field.describe(), 'a number equals -4.5');
   t.true(field.filter({ prop: -4.5 }));
   t.false(field.filter({ prop: 4.5 }));
   t.false(field.filter({ foo: -4.5 }));
 });
 
-test.todo('NumberField pluralization');
-test.todo('NumberField negation');
-test.todo('NumberField rejects non-number queries');
+test.todo('NumberPropertyField pluralization');
+test.todo('NumberPropertyField negation');
+test.todo('NumberPropertyField rejects non-number queries');
 
-test('NumberField supports ">"', (t) => {
+test('NumberPropertyField supports ">"', (t) => {
   const field = t.context.number['>'](-4.5);
   t.is(field.describe(), 'a number is greater than -4.5');
   t.true(field.filter({ prop: -4 }));
@@ -94,7 +94,7 @@ test('NumberField supports ">"', (t) => {
   t.false(field.filter({ foo: -4 }));
 });
 
-test('NumberField supports ">="', (t) => {
+test('NumberPropertyField supports ">="', (t) => {
   const field = t.context.number['>='](-4.5);
   t.is(field.describe(), 'a number is at least -4.5');
   t.true(field.filter({ prop: -4 }));
@@ -103,7 +103,7 @@ test('NumberField supports ">="', (t) => {
   t.false(field.filter({ foo: -4 }));
 });
 
-test('NumberField supports "<="', (t) => {
+test('NumberPropertyField supports "<="', (t) => {
   const field = t.context.number['<='](-4.5);
   t.is(field.describe(), 'a number is at most -4.5');
   t.false(field.filter({ prop: -4 }));
@@ -112,7 +112,7 @@ test('NumberField supports "<="', (t) => {
   t.false(field.filter({ foo: -5 }));
 });
 
-test('NumberField supports "<"', (t) => {
+test('NumberPropertyField supports "<"', (t) => {
   const field = t.context.number['<'](-4.5);
   t.is(field.describe(), 'a number is less than -4.5');
   t.false(field.filter({ prop: -4 }));
