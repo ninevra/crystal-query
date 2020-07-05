@@ -1,7 +1,7 @@
 import {
   StringPropertyField,
   NumberPropertyField,
-  FieldHandler,
+  FieldTermHandler,
   Status
 } from './fields.js';
 import test from 'ava';
@@ -9,7 +9,7 @@ import test from 'ava';
 test.beforeEach((t) => {
   t.context.string = new StringPropertyField('some field', false, 'foo');
   t.context.number = new NumberPropertyField('a number', false, 'prop');
-  t.context.handler = new FieldHandler({
+  t.context.handler = new FieldTermHandler({
     string: t.context.string,
     number: t.context.number
   });
@@ -90,7 +90,7 @@ test('NumberPropertyField supports "<"', (t) => {
   t.false(field.filter({ foo: -5 }));
 });
 
-test('FieldHandler retrieves appropriate fields', (t) => {
+test('FieldTermHandler retrieves appropriate fields', (t) => {
   const handler = t.context.handler;
   t.is(handler.get('number', '=', '5').describe(), 'a number equals 5');
   t.is(handler.get('number', ':', '4').describe(), 'a number equals 4');
@@ -100,7 +100,7 @@ test('FieldHandler retrieves appropriate fields', (t) => {
   );
 });
 
-test('FieldHandler returns appropriate error on missing fields', (t) => {
+test('FieldTermHandler returns appropriate error on missing fields', (t) => {
   const handler = t.context.handler;
   t.like(handler.get('absent', '=', '5'), {
     status: Status.ERROR,
@@ -108,7 +108,7 @@ test('FieldHandler returns appropriate error on missing fields', (t) => {
   });
 });
 
-test('FieldHandler returns appropriate error on missing operators', (t) => {
+test('FieldTermHandler returns appropriate error on missing operators', (t) => {
   t.like(t.context.handler.get('string', '>', 'blah'), {
     status: Status.ERROR,
     error: 'can\'t use ">" on field "string"'

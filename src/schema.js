@@ -1,5 +1,5 @@
 import { Parser } from './parser.js';
-import { GenericFieldHandler, Status } from './fields.js';
+import { GenericTermHandler, Status } from './fields.js';
 import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {
@@ -11,7 +11,7 @@ export class InvalidNodeError extends Error {
 export class Schema {
   constructor({
     operators = [':', '>=', '<=', '<', '=', '>'],
-    fieldHandler = new GenericFieldHandler(),
+    termHandler = new GenericTermHandler(),
     descriptors: {
       conjunction = ({ left, right }) => messages.conjunction({ left, right }),
       disjunction = ({ left, right }) => messages.disjunction({ left, right }),
@@ -20,7 +20,7 @@ export class Schema {
     } = {}
   } = {}) {
     this.parser = new Parser({ operators });
-    this.fieldHandler = fieldHandler;
+    this.termHandler = termHandler;
     this.descriptors = { conjunction, disjunction, parenthetical };
   }
   process(query) {
@@ -67,7 +67,7 @@ export class Schema {
           negated
         });
       case 'Term':
-        return this.fieldHandler.get(...astNode.value).describe(negated);
+        return this.termHandler.get(...astNode.value).describe(negated);
       default:
         throw new InvalidNodeError(astNode);
     }
@@ -86,7 +86,7 @@ export class Schema {
       case 'Nil':
         return [];
       case 'Term': {
-        const { status, error } = this.fieldHandler.get(...astNode.value);
+        const { status, error } = this.termHandler.get(...astNode.value);
         return status === Status.SUCCESS ? [] : [error];
       }
       default:
@@ -115,7 +115,7 @@ export class Schema {
         return (value) => !child(value);
       }
       case 'Term':
-        return this.fieldHandler.get(...astNode.value).filter;
+        return this.termHandler.get(...astNode.value).filter;
       case 'Nil':
         return () => false;
       case 'Parenthetical': {

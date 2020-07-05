@@ -5,7 +5,7 @@ export const Status = {
   ERROR: Symbol.for('query-filter.field-status.error')
 };
 
-export class GenericFieldHandler {
+export class GenericTermHandler {
   get(name, operator, value) {
     return {
       status: Status.SUCCESS,
@@ -35,7 +35,7 @@ export class GenericFieldHandler {
   }
 }
 
-export class FieldHandler {
+export class FieldTermHandler {
   constructor(
     fields,
     {
@@ -88,7 +88,7 @@ export class StringPropertyField {
     return {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
-      filter: (object) => object?.[this.property]?.includes(value) ?? false
+      filter: (object) => object?.[this.property]?.includes?.(value) ?? false
     };
   }
   '='(value) {

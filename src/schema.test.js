@@ -1,7 +1,7 @@
 import { Schema } from './schema.js';
 import { Parser } from './parser.js';
 import {
-  FieldHandler,
+  FieldTermHandler,
   StringPropertyField,
   NumberPropertyField
 } from './fields.js';
@@ -56,7 +56,7 @@ test('parse() returns syntax error on invalid fields', (t) => {
 
 test('parse() returns field error on unsupported fields or operators', (t) => {
   const schema = new Schema({
-    fieldHandler: new FieldHandler({
+    termHandler: new FieldTermHandler({
       foo: new StringPropertyField('foo', false, 'foo'),
       bar: new NumberPropertyField('bar', false, 'bar')
     })
