@@ -70,10 +70,10 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   });
 });
 
-test('process() returns all applicable of ast, description, evaluator, errors', (t) => {
+test('query() returns all applicable of ast, description, evaluator, errors', (t) => {
   const schema = new Schema();
   let query = 'not (a or b:"c d") and e>3';
-  let result = schema.process(query);
+  let result = schema.query(query);
   t.like(result, {
     status: true,
     ast: new Parser().parse(query).value,
@@ -84,7 +84,7 @@ test('process() returns all applicable of ast, description, evaluator, errors', 
   t.false(result.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';
-  result = schema.process(query);
+  result = schema.query(query);
   assertSyntaxError(t, result);
   t.is(result.ast, undefined);
   t.is(result.description, undefined);

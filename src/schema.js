@@ -24,7 +24,7 @@ export class Schema {
     this.termHandler = termHandler;
     this.descriptors = { conjunction, disjunction, parenthetical };
   }
-  process(query) {
+  query(query) {
     const parsed = this.parse(query);
     if (parsed.status) {
       parsed.description = this.describeNode(parsed.ast);
