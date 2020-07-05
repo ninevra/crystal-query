@@ -148,6 +148,30 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
   });
 });
 
+test('language.conjunction recognizes lists of terms', (t) => {
+  const { conjunction } = new Parser().language;
+  let result = conjunction.parse('a b');
+  t.like(result, { status: true, value: { name: 'And' } });
+  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
+  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
+});
+
+test('language.conjunction lists have higher precedence than "or"', (t) => {
+  const { disjunction } = new Parser().language;
+  let result = disjunction.parse('a or b c');
+  t.like(result, { status: true, value: { name: 'Or' } });
+  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
+  t.like(result.value.value[1], { name: 'And' });
+  t.like(result.value.value[1].value[0], {
+    name: 'Term',
+    value: ['', '', 'b']
+  });
+  t.like(result.value.value[1].value[1], {
+    name: 'Term',
+    value: ['', '', 'c']
+  });
+});
+
 test('language.disjunction recognizes terms, disjunctions', (t) => {
   const disjunction = new Parser().language.disjunction;
   t.like(disjunction.parse('foo:"bar"'), {
@@ -172,30 +196,6 @@ test('language.disjunction places "and" at higher precedence than "or"', (t) => 
     value: { name: 'Term', value: ['', '', 'a'] }
   });
   t.like(result.value.value[1], { name: 'And' });
-});
-
-test('language.list recognizes lists of terms', (t) => {
-  const list = new Parser().language.list;
-  let result = list.parse('a b');
-  t.like(result, { status: true, value: { name: 'And' } });
-  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
-  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
-});
-
-test('language.list has lower precedence than "or"', (t) => {
-  const list = new Parser().language.list;
-  let result = list.parse('a or b c');
-  t.like(result, { status: true, value: { name: 'And' } });
-  t.like(result.value.value[0], { name: 'Or' });
-  t.like(result.value.value[0].value[0], {
-    name: 'Term',
-    value: ['', '', 'a']
-  });
-  t.like(result.value.value[0].value[1], {
-    name: 'Term',
-    value: ['', '', 'b']
-  });
-  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'c'] });
 });
 
 test('language.parenthetical recognizes parenthetical expressions', (t) => {

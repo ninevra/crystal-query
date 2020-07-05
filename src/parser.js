@@ -59,7 +59,12 @@ export class Parser {
         parsimmon.alt(
           parsimmon
             .seq(
-              l.negation.skip(l.and.trim(parsimmon.optWhitespace)),
+              l.negation.skip(
+                parsimmon.alt(
+                  l.and.trim(parsimmon.optWhitespace),
+                  parsimmon.optWhitespace
+                )
+              ),
               l.conjunction
             )
             .node('And'),
@@ -75,15 +80,8 @@ export class Parser {
             .node('Or'),
           l.conjunction
         ),
-      list: (l) =>
-        parsimmon.alt(
-          parsimmon
-            .seq(l.disjunction.skip(parsimmon.optWhitespace), l.list)
-            .node('And'),
-          l.disjunction
-        ),
       expression: (l) =>
-        parsimmon.alt(l.list, parsimmon.optWhitespace.node('Nil')),
+        parsimmon.alt(l.disjunction, parsimmon.optWhitespace.node('Nil')),
       query: (l) => l.expression
     });
   }
