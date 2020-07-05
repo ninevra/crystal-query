@@ -82,7 +82,6 @@ test('process() returns all applicable of ast, description, evaluator, errors', 
     description: 'not ("a" or b:"c d") and e>"3"',
     errors: []
   });
-  debugger;
   t.true(result.evaluate({ e: 4, b: NaN }));
   t.false(result.evaluate(['a']));
 
