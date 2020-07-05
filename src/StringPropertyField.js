@@ -1,4 +1,4 @@
-import { Status } from './termStatus.js';
+import { TermStatus } from './TermStatus.js';
 import * as messages from './messages.js';
 
 export class StringPropertyField {

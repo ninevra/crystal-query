@@ -1,10 +1,10 @@
-import { Status } from './termStatus.js';
+import { TermStatus } from './TermStatus.js';
 import { fieldGeneric } from './messages.js';
 
 export class GenericTermHandler {
   get(name, operator, value) {
     return {
-      status: Status.SUCCESS,
+      status: TermStatus.SUCCESS,
       describe: (negated) => fieldGeneric({ name, operator, value, negated }),
       filter: (input) => {
         if (name !== '') input = input?.[name];
