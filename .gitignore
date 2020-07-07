@@ -3,3 +3,6 @@
 
 # ignore c8 coverage reports
 /coverage/
+
+# ignore transpiled files
+/lib/

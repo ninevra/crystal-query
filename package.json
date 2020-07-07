@@ -4,29 +4,39 @@
   "description": "A simple query language with customizable semantics",
   "author": "ninevra",
   "license": "ISC",
-  "main": "./src/index.js",
-  "module": "./src/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "type": "module",
   "exports": {
-    "import": "./src/index.js"
+    "import": "./lib/index.js"
   },
   "scripts": {
+    "clean": "rm -rf lib/",
+    "prebuild": "npm run clean",
+    "build": "babel src -d lib/ --source-maps true --copy-files",
+    "pretest": "npm run build",
     "test": "c8 ava",
     "test:debug": "ava debug --break",
     "format": "prettier --write .",
-    "format:watch": "onchange '**/*.js' -- prettier --write {{changed}}",
+    "format:watch": "onchange 'src/*.js' -- prettier --write {{changed}}",
     "snaps:update": "ava --update-snapshots"
   },
   "dependencies": {
     "parsimmon": "^1.13.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
     "ava": "^3.9.0",
     "c8": "^7.2.0",
     "onchange": "^7.0.2",
     "prettier": "^2.0.5"
   },
   "ava": {
+    "files": [
+      "lib/**/*.test.*"
+    ],
     "verbose": true,
     "nonSemVerExperiments": {
       "likeAssertion": true
