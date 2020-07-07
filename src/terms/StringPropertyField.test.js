@@ -34,5 +34,13 @@ test('StringPropertyField case-insensitive description', (t) => {
   });
   t.is(insensitive[':']('Bar').describe(), 'some field contains "Bar"');
 });
-test.todo('StringPropertyField pluralization');
-test.todo('StringPropertyField negation');
+
+test('StringPropertyField pluralization', (t) => {
+  const field = new StringPropertyField('some fields', true, 'foo');
+  t.is(field[':']('Bar').describe(), 'some fields contain "Bar"');
+});
+
+test('StringPropertyField negation', (t) => {
+  const field = new StringPropertyField('some fields', true, 'foo');
+  t.is(field[':']('Bar').describe(true), 'some fields do not contain "Bar"');
+});
