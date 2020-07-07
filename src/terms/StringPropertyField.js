@@ -17,26 +17,26 @@ export class StringPropertyField {
     };
   }
   ':'(value) {
-    value = this.caseSensitive ? value : value.toUpperCase();
+    const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
       predicate: (input) => {
         let actual = input?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
-        return actual?.includes?.(value) ?? false;
+        return actual?.includes?.(casedValue) ?? false;
       }
     };
   }
   '='(value) {
-    value = this.caseSensitive ? value : value.toUpperCase();
+    const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
       predicate: (input) => {
         let actual = input?.[this.property];
         if (!this.caseSensitive) actual = actual?.toUpperCase?.();
-        return actual === value;
+        return actual === casedValue;
       }
     };
   }

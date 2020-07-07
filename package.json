@@ -18,7 +18,7 @@
     "test": "c8 ava",
     "test:debug": "ava debug --break",
     "format": "prettier --write .",
-    "format:watch": "onchange 'src/*.js' -- prettier --write {{changed}}",
+    "format:watch": "onchange 'src/**/*.js' -- prettier --write {{changed}}",
     "snaps:update": "ava --update-snapshots"
   },
   "dependencies": {

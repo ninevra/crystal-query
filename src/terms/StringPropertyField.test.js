@@ -28,5 +28,11 @@ test('StringPropertyField caseSensitive', (t) => {
   t.true(insensitive[':']('bar').predicate({ foo: 'BaRBaZ' }));
 });
 
+test('StringPropertyField case-insensitive description', (t) => {
+  const insensitive = new StringPropertyField('some field', false, 'foo', {
+    caseSensitive: false
+  });
+  t.is(insensitive[':']('Bar').describe(), 'some field contains "Bar"');
+});
 test.todo('StringPropertyField pluralization');
 test.todo('StringPropertyField negation');
