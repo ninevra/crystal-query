@@ -1,5 +1,5 @@
 {
-  "name": "query-filter",
+  "name": "oracle-query",
   "version": "0.1.0",
   "description": "A simple query language with customizable semantics",
   "author": "ninevra",

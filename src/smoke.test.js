@@ -1,7 +1,7 @@
 import test from 'ava';
 
 test('import() should import all classes, messages', async (t) => {
-  const mod = await import('query-filter');
+  const mod = await import('oracle-query');
   t.true(typeof mod.Parser === 'function');
   t.true(typeof mod.Schema === 'function');
   t.true(typeof mod.FieldTermHandler === 'function');
