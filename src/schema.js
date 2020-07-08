@@ -33,13 +33,13 @@ export class Schema {
     return parsed;
   }
   parse(query) {
-    let { status, value: ast, expected } = this.parser.parse(query);
+    let { status, value: ast, index, expected } = this.parser.parse(query);
     let errors;
     if (status) {
       errors = this.validateNode(ast);
       status = errors.length === 0;
     } else {
-      errors = [`syntax error: expected [${expected.join(', ')}]`];
+      errors = [{ type: 'syntax', index, expected }];
     }
     return { status, errors, ast };
   }
@@ -88,7 +88,12 @@ export class Schema {
         return [];
       case 'Term': {
         const { status, error } = this.termHandler.get(...astNode.value);
-        return status === TermStatus.SUCCESS ? [] : [error];
+        if (status === TermStatus.SUCCESS) {
+          return [];
+        } else {
+          const { start, end, value } = astNode;
+          return [{ type: 'field', start, end, value, message: error }];
+        }
       }
       default:
         throw new InvalidNodeError(astNode);

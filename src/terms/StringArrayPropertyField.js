@@ -10,6 +10,7 @@ export class StringArrayPropertyField {
   ':'(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
+      status: true,
       describe: (negated) =>
         messages.fieldContains({
           name: this.name,

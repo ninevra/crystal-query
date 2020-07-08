@@ -38,3 +38,10 @@ test('FieldTermHandler returns appropriate error on missing operators', (t) => {
     error: 'can\'t use ">" on field "string"'
   });
 });
+
+test('FieldTermHandler relays errors from fields', (t) => {
+  t.like(t.context.handler.get('number', '=', 'foo'), {
+    status: TermStatus.ERROR,
+    error: 'expected a number, not "foo"'
+  });
+});

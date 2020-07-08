@@ -1,4 +1,5 @@
 import { NumberPropertyField } from './NumberPropertyField.js';
+import * as messages from '../messages.js';
 import test from 'ava';
 
 test.beforeEach((t) => {
@@ -33,7 +34,10 @@ test('NumberPropertyField negation', (t) => {
 
 test('NumberPropertyField rejects non-number queries', (t) => {
   const field = new NumberPropertyField('some numbers', true, 'prop');
-  t.throws(() => field['<']('foo'));
+  t.like(field['<']('foo'), {
+    status: false,
+    error: messages.errorWrongType({ type: 'number', value: 'foo' })
+  });
 });
 
 test('NumberPropertyField supports ">"', (t) => {

@@ -30,7 +30,9 @@ test('parse() returns parsed ast on success', (t) => {
 function assertSyntaxError(t, result) {
   t.like(result, { status: false });
   t.is(result.errors.length, 1);
-  t.regex(result.errors[0], /syntax error: expected \[.*\]/);
+  t.like(result.errors[0], { type: 'syntax' });
+  t.true(result.errors[0].expected.length > 0);
+  t.truthy(result.errors[0].index);
 }
 
 test('parse() returns syntax error on unclosed parenthesis', (t) => {
@@ -59,14 +61,28 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
       bar: new NumberPropertyField('bar', false, 'bar')
     })
   });
-  t.like(schema.parse('foo>bar <2 bar:baz baz:foo'), {
-    status: false,
-    errors: [
-      messages.errorMissingOperator({ name: 'foo', operator: '>' }),
-      messages.errorMissingField({ name: '' }),
-      messages.errorWrongType({ type: 'number', value: 'baz' }),
-      messages.errorMissingField({ name: 'baz' })
-    ]
+  let result = schema.parse('foo>bar <2 bar:baz baz:foo');
+  t.like(result, {
+    status: false
+  });
+  t.is(result.errors.length, 4);
+  t.like(result.errors[0], {
+    type: 'field',
+    message: messages.errorMissingOperator({ name: 'foo', operator: '>' }),
+    start: { offset: 0, line: 1, column: 1 },
+    end: { offset: 7, line: 1, column: 8 }
+  });
+  t.like(result.errors[1], {
+    type: 'field',
+    message: messages.errorMissingField({ name: '' })
+  });
+  t.like(result.errors[2], {
+    type: 'field',
+    message: messages.errorWrongType({ type: 'number', value: 'baz' })
+  });
+  t.like(result.errors[3], {
+    type: 'field',
+    message: messages.errorMissingField({ name: 'baz' })
   });
 });
 

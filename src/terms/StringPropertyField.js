@@ -19,6 +19,7 @@ export class StringPropertyField {
   ':'(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
+      status: true,
       describe: (negated) =>
         messages.fieldContains(this.makeMessageArg({ value, negated })),
       predicate: (input) => {
@@ -31,6 +32,7 @@ export class StringPropertyField {
   '='(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
+      status: true,
       describe: (negated) =>
         messages.fieldEquals(this.makeMessageArg({ value, negated })),
       predicate: (input) => {

@@ -26,11 +26,13 @@ export class FieldTermHandler {
         error: this.errorDesciptors.missingOperator({ name, operator })
       };
     } else {
-      try {
-        const field = this.fields[name][operator](value);
-        return { status: TermStatus.SUCCESS, ...field };
-      } catch (e) {
-        return { status: TermStatus.ERROR, error: e.message };
+      const { status, describe, predicate, error } = this.fields[name][
+        operator
+      ](value);
+      if (status) {
+        return { status: TermStatus.SUCCESS, describe, predicate };
+      } else {
+        return { status: TermStatus.ERROR, error };
       }
     }
   }
