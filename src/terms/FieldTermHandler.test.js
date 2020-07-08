@@ -1,7 +1,6 @@
 import { StringPropertyField } from './StringPropertyField.js';
 import { NumberPropertyField } from './NumberPropertyField.js';
 import { FieldTermHandler } from './FieldTermHandler.js';
-import { TermStatus } from './TermStatus.js';
 
 import test from 'ava';
 
@@ -27,21 +26,21 @@ test('FieldTermHandler retrieves appropriate fields', (t) => {
 test('FieldTermHandler returns appropriate error on missing fields', (t) => {
   const handler = t.context.handler;
   t.like(handler.get('absent', '=', '5'), {
-    status: TermStatus.ERROR,
+    status: false,
     error: 'unknown field "absent"'
   });
 });
 
 test('FieldTermHandler returns appropriate error on missing operators', (t) => {
   t.like(t.context.handler.get('string', '>', 'blah'), {
-    status: TermStatus.ERROR,
+    status: false,
     error: 'can\'t use ">" on field "string"'
   });
 });
 
 test('FieldTermHandler relays errors from fields', (t) => {
   t.like(t.context.handler.get('number', '=', 'foo'), {
-    status: TermStatus.ERROR,
+    status: false,
     error: 'expected a number, not "foo"'
   });
 });

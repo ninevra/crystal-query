@@ -1,6 +1,5 @@
 import { Parser } from './parser.js';
 import { GenericTermHandler } from './terms/GenericTermHandler.js';
-import { TermStatus } from './terms/TermStatus.js';
 import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {
@@ -88,7 +87,7 @@ export class Schema {
         return [];
       case 'Term': {
         const { status, error } = this.termHandler.get(...astNode.value);
-        if (status === TermStatus.SUCCESS) {
+        if (status) {
           return [];
         } else {
           const { start, end, value } = astNode;
