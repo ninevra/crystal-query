@@ -1,11 +1,11 @@
-# oracle-query
+# crystal-query
 
 A simple query language with configurable semantics.
 
-`oracle-query` has not reached version `1.0.0`; the interface and functionality may change at any time, and the documentation is incomplete.
+`crystal-query` has not reached version `1.0.0`; the interface and functionality may change at any time, and the documentation is incomplete.
 
 ```javascript
-import { Schema } from 'oracle-query';
+import { Schema } from 'crystal-query';
 
 const { description, predicate } = new Schema().query(
   'foo>3 bar:"lorem ipsum"'
@@ -21,7 +21,7 @@ if (predicate({ foo: 4, bar: 'lorem ipsum dolor sic amet' })) {
 
 ## Language
 
-`oracle-query` parses queries composed of lists of _terms_ and logical operators (`not`, `and`, and `or`). A query defines a predicate function that returns true iff the input satisfies the terms of the query (as modified by logical operators). This predicate function can then be used to search a list of values using e.g. [`Array.prototype.filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter).
+`crystal-query` parses queries composed of lists of _terms_ and logical operators (`not`, `and`, and `or`). A query defines a predicate function that returns true iff the input satisfies the terms of the query (as modified by logical operators). This predicate function can then be used to search a list of values using e.g. [`Array.prototype.filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter).
 
 ### Terms
 
@@ -109,7 +109,7 @@ Returns an object `{describe, predicate}`.
 
 ### class GenericTermHandler
 
-`GenericTermHandler` is meant to provide reasonable starting behavior when setting up `oracle-query`. Most applications will want to configure and use a `FieldTermHandler` instead.
+`GenericTermHandler` is meant to provide reasonable starting behavior when setting up `crystal-query`. Most applications will want to configure and use a `FieldTermHandler` instead.
 
 A `GenericTermHandler` maps non-empty field names to properties of the input value. It accepts all possible fields, but understands only the default operators, and mostly gives them their default behavior in javascript; so, for example, the term `foo>=3` is translated to `(input) => input?.foo >= '3'`. The operator `=` is translated to `==`. The operator `:` is translated to `includes()`, e.g. `foo:3` to `(input) => input?.includes?.('3')`. Operators outside of the default list produce fields that always evaluate to false.
 
