@@ -290,4 +290,22 @@ test("malformed conjunctions don't cause fatal errors", (t) => {
     ['Term', '', '', 'bar']
   ]);
 });
-test.todo("malformed disjunctions don't cause fatal errors");
+
+test("malformed disjunctions don't cause fatal errors", (t) => {
+  const { disjunction } = new Parser().language;
+  assertResultStructure(t, disjunction.parse('or'), [
+    'Or',
+    ['Term', '', '', ''],
+    ['Term', '', '', '']
+  ]);
+  assertResultStructure(t, disjunction.parse('foo or'), [
+    'Or',
+    ['Term', '', '', 'foo'],
+    ['Term', '', '', '']
+  ]);
+  assertResultStructure(t, disjunction.parse('or bar'), [
+    'Or',
+    ['Term', '', '', ''],
+    ['Term', '', '', 'bar']
+  ]);
+});

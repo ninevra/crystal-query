@@ -75,8 +75,8 @@ export class Parser {
         parsimmon.alt(
           parsimmon
             .seq(
-              l.conjunction.skip(l.or.trim(parsimmon.optWhitespace)),
-              l.disjunction
+              l.conjunction.or(l.nil).skip(parsimmon.optWhitespace).skip(l.or),
+              parsimmon.optWhitespace.then(l.disjunction).or(l.nil)
             )
             .node('Or'),
           l.conjunction
