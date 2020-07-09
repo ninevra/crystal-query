@@ -309,3 +309,11 @@ test("malformed disjunctions don't cause fatal errors", (t) => {
     ['Term', '', '', 'bar']
   ]);
 });
+
+test("malformed negations don't cause fatal errors", (t) => {
+  const { negation } = new Parser().language;
+  assertResultStructure(t, negation.parse('not'), [
+    'Not',
+    ['Term', '', '', '']
+  ]);
+});

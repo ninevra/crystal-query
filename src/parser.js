@@ -55,7 +55,9 @@ export class Parser {
       basic: (l) => parsimmon.alt(l.term, l.parenthetical),
       negation: (l) =>
         parsimmon.alt(
-          l.not.skip(parsimmon.optWhitespace).then(l.negation).node('Not'),
+          l.not
+            .then(parsimmon.optWhitespace.then(l.negation).or(l.nil))
+            .node('Not'),
           l.basic
         ),
       conjunction: (l) =>

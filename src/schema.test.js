@@ -46,10 +46,6 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
   assertSyntaxError(t, new Schema().parse('foo "'));
 });
 
-test('parse() returns syntax error on invalid constructions', (t) => {
-  assertSyntaxError(t, new Schema().parse('not'));
-});
-
 test('parse() returns field error on unsupported fields or operators', (t) => {
   const schema = new Schema({
     termHandler: new FieldTermHandler({
