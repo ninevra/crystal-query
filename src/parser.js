@@ -49,6 +49,7 @@ export class Parser {
             parsimmon.seq(parsimmon.of(''), l.operator, parsimmon.of(''))
           )
           .node('Term'),
+      nil: () => parsimmon.optWhitespace.result(['', '', '']).node('Term'),
       parenthetical: (l) =>
         l.expression.wrap(l.lparen, l.rparen).node('Parenthetical'),
       basic: (l) => parsimmon.alt(l.term, l.parenthetical),
@@ -61,14 +62,12 @@ export class Parser {
         parsimmon.alt(
           parsimmon
             .seq(
-              l.negation.skip(
-                parsimmon.alt(
-                  l.and.trim(parsimmon.optWhitespace),
-                  parsimmon.optWhitespace
-                )
-              ),
-              l.conjunction
+              l.negation.or(l.nil).skip(parsimmon.optWhitespace).skip(l.and),
+              parsimmon.optWhitespace.then(l.conjunction).or(l.nil)
             )
+            .node('And'),
+          parsimmon
+            .seq(l.negation.skip(parsimmon.optWhitespace), l.conjunction)
             .node('And'),
           l.negation
         ),
@@ -82,8 +81,7 @@ export class Parser {
             .node('Or'),
           l.conjunction
         ),
-      expression: (l) =>
-        parsimmon.alt(l.disjunction, parsimmon.optWhitespace.node('Nil')),
+      expression: (l) => parsimmon.alt(l.disjunction, l.nil),
       query: (l) => l.expression
     });
   }

@@ -248,6 +248,11 @@ function assertStructure(t, actual, structure) {
   }
 }
 
+function assertResultStructure(t, result, structure) {
+  t.like(result, { status: true });
+  assertStructure(t, result.value, structure);
+}
+
 test("strange/invalid terms don't cause fatal errors", (t) => {
   const { term, expression } = new Parser().language;
   t.like(term.parse('>'), {
@@ -267,5 +272,22 @@ test("strange/invalid terms don't cause fatal errors", (t) => {
   ]); // foo and : and bar
 });
 
-test.todo("malformed conjunctions don't cause fatal errors");
+test("malformed conjunctions don't cause fatal errors", (t) => {
+  const { conjunction } = new Parser().language;
+  assertResultStructure(t, conjunction.parse('and'), [
+    'And',
+    ['Term', '', '', ''],
+    ['Term', '', '', '']
+  ]);
+  assertResultStructure(t, conjunction.parse('foo and '), [
+    'And',
+    ['Term', '', '', 'foo'],
+    ['Term', '', '', '']
+  ]);
+  assertResultStructure(t, conjunction.parse('and bar'), [
+    'And',
+    ['Term', '', '', ''],
+    ['Term', '', '', 'bar']
+  ]);
+});
 test.todo("malformed disjunctions don't cause fatal errors");

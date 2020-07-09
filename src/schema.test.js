@@ -47,7 +47,6 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
 });
 
 test('parse() returns syntax error on invalid constructions', (t) => {
-  assertSyntaxError(t, new Schema().parse('and:foo'));
   assertSyntaxError(t, new Schema().parse('not'));
 });
 
