@@ -46,12 +46,9 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
   assertSyntaxError(t, new Schema().parse('foo "'));
 });
 
-test('parse() returns syntax error on invalid fields', (t) => {
-  // TODO: '"foo":bar' parses currently, as <foo and :bar>. This is a confusing
-  // side effect of allowing nameless field queries; consider removing them
-  let others = ['"foo":bar'];
-  let fields = ['>', 'a<>b', 'foo= bar', 'and:foo'];
-  fields.map((field) => assertSyntaxError(t, new Schema().parse(field)));
+test('parse() returns syntax error on invalid constructions', (t) => {
+  assertSyntaxError(t, new Schema().parse('and:foo'));
+  assertSyntaxError(t, new Schema().parse('not'));
 });
 
 test('parse() returns field error on unsupported fields or operators', (t) => {

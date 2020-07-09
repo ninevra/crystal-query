@@ -232,3 +232,40 @@ test('empty expressions', (t) => {
     value: { name: 'Not', value: { name: 'Parenthetical' } }
   });
 });
+
+function assertStructure(t, actual, structure) {
+  if (structure[0] === 'And' || structure[0] === 'Or') {
+    t.like(actual, { name: structure[0] });
+    assertStructure(t, actual.value[0], structure[1]);
+    assertStructure(t, actual.value[1], structure[2]);
+  } else if (structure[0] === 'Not' || structure[0] === 'Parenthetical') {
+    t.like(actual, { name: structure[0] });
+    assertStructure(t, actual.value, structure[1]);
+  } else if (structure[0] === 'Term') {
+    t.like(actual, { name: structure[0], value: structure.slice(1) });
+  } else {
+    t.fail(`unexpected structure element ${structure[0]}`);
+  }
+}
+
+test("strange/invalid terms don't cause fatal errors", (t) => {
+  const { term, expression } = new Parser().language;
+  t.like(term.parse('>'), {
+    status: true,
+    value: { name: 'Term', value: ['', '>', ''] }
+  });
+  let result = expression.parse('foo>>bar'); // foo and > and >bar
+  assertStructure(t, result.value, [
+    'And',
+    ['Term', '', '', 'foo'],
+    ['And', ['Term', '', '>', ''], ['Term', '', '>', 'bar']]
+  ]);
+  assertStructure(t, expression.parse('foo: bar').value, [
+    'And',
+    ['Term', '', '', 'foo'],
+    ['And', ['Term', '', ':', ''], ['Term', '', '', 'bar']]
+  ]); // foo and : and bar
+});
+
+test.todo("malformed conjunctions don't cause fatal errors");
+test.todo("malformed disjunctions don't cause fatal errors");

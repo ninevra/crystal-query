@@ -43,8 +43,10 @@ export class Parser {
       term: (l) =>
         parsimmon
           .alt(
-            parsimmon.seq(l.identifier.atMost(1).tie(), l.operator, l.value),
-            l.value.map((value) => ['', '', value])
+            parsimmon.seq(l.identifier, l.operator, l.value),
+            parsimmon.seq(parsimmon.of(''), l.operator, l.value),
+            parsimmon.seq(parsimmon.of(''), parsimmon.of(''), l.value),
+            parsimmon.seq(parsimmon.of(''), l.operator, parsimmon.of(''))
           )
           .node('Term'),
       parenthetical: (l) =>
