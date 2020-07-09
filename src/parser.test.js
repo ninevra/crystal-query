@@ -317,3 +317,11 @@ test("malformed negations don't cause fatal errors", (t) => {
     ['Term', '', '', '']
   ]);
 });
+
+test("surrounding whitespace doesn't break parsers", (t) => {
+  const { expression } = new Parser().language;
+  t.like(expression.parse(' foo '), { status: true });
+  t.like(expression.parse(' not foo '), { status: true });
+  t.like(expression.parse('( foo )'), { status: true });
+  t.like(expression.parse(' ( foo ) '), { status: true });
+});

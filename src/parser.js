@@ -83,7 +83,8 @@ export class Parser {
             .node('Or'),
           l.conjunction
         ),
-      expression: (l) => parsimmon.alt(l.disjunction, l.nil),
+      expression: (l) =>
+        parsimmon.alt(l.disjunction.trim(parsimmon.optWhitespace), l.nil),
       query: (l) => l.expression
     });
   }
