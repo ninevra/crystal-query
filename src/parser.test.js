@@ -42,6 +42,17 @@ test('language.quoted recognizes phrases with escaped quotes', (t) => {
   t.like(quoted.parse(String.raw`"\""`), { status: true, value: '"' });
 });
 
+test('language.quoted recognizes phrases with escaped backslashes', (t) => {
+  const { quoted } = new Parser().language;
+  t.like(quoted.parse(String.raw`"\\"`), { status: true, value: '\\' });
+});
+
+test('language.quoted unescapes other escape sequences', (t) => {
+  const { quoted } = new Parser().language;
+  t.like(quoted.parse(String.raw`"\a"`), { status: true, value: 'a' });
+  t.like(quoted.parse(String.raw`"\b"`), { status: true, value: 'b' });
+});
+
 test('language.term recognizes terms', (t) => {
   const term = new Parser().language.term;
   t.deepEqual(term.parse('foo'), {

@@ -32,11 +32,9 @@ export class Parser {
           .tie(),
       identifier: (l) =>
         l.word.assert((word) => !l.keyword.parse(word).status, 'an identifier'),
-      phrase: () =>
-        parsimmon
-          .alt(parsimmon.string('\\"').result('"'), parsimmon.noneOf('"'))
-          .many()
-          .tie(),
+      escaped: () => parsimmon.string('\\').then(parsimmon.any),
+      phrase: (l) =>
+        parsimmon.alt(l.escaped, parsimmon.noneOf('"')).many().tie(),
       quote: () => parsimmon.string('"'),
       quoted: (l) => l.phrase.trim(l.quote),
       value: (l) => parsimmon.alt(l.identifier, l.quoted),
