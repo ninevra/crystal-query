@@ -27,23 +27,23 @@ test('parse() returns parsed ast on success', (t) => {
   });
 });
 
-function assertSyntaxError(t, result) {
+function assertSyntaxError(t, result, subtype = 'unknown') {
   t.like(result, { status: false });
   t.is(result.errors.length, 1);
-  t.like(result.errors[0], { type: 'syntax' });
+  t.like(result.errors[0], { type: 'syntax', subtype });
   t.true(result.errors[0].expected.length > 0);
   t.truthy(result.errors[0].index);
 }
 
 test('parse() returns syntax error on unclosed parenthesis', (t) => {
-  let result = new Schema().parse('not (a b c');
-  assertSyntaxError(t, result);
-  assertSyntaxError(t, new Schema().parse('not a) b c'));
+  const schema = new Schema();
+  assertSyntaxError(t, schema.parse('not (a b c'), 'unclosed parenthetical');
+  assertSyntaxError(t, schema.parse('not a) b c'), 'unopened parenthetical');
 });
 
 test('parse() returns syntax error on unclosed quotes', (t) => {
-  assertSyntaxError(t, new Schema().parse('a:"b c'));
-  assertSyntaxError(t, new Schema().parse('foo "'));
+  assertSyntaxError(t, new Schema().parse('a:"b c'), 'unclosed quotation');
+  assertSyntaxError(t, new Schema().parse('foo "'), 'unclosed quotation');
 });
 
 test('parse() returns field error on unsupported fields or operators', (t) => {
@@ -93,7 +93,7 @@ test('query() returns all applicable of ast, description, evaluator, errors', (t
 
   query = 'not (a or b:"c d) and e>3';
   result = schema.query(query);
-  assertSyntaxError(t, result);
+  assertSyntaxError(t, result, 'unclosed quotation');
   t.is(result.ast, undefined);
   t.is(result.description, undefined);
   t.is(result.predicate, undefined);

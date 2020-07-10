@@ -38,7 +38,19 @@ export class Schema {
       errors = this.validateNode(ast);
       status = errors.length === 0;
     } else {
-      errors = [{ type: 'syntax', index, expected }];
+      let subtype = 'unknown';
+      const offset = index.offset;
+      if (
+        query[offset] === ')' &&
+        this.parser.parse(query.substring(0, offset)).status
+      ) {
+        subtype = 'unopened parenthetical';
+      } else if (offset === query.length && expected.includes('closing )')) {
+        subtype = 'unclosed parenthetical';
+      } else if (offset === query.length && expected.includes('closing "')) {
+        subtype = 'unclosed quotation';
+      }
+      errors = [{ type: 'syntax', index, expected, subtype }];
     }
     return { status, errors, ast };
   }

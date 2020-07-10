@@ -36,7 +36,7 @@ export class Parser {
       phrase: (l) =>
         parsimmon.alt(l.escaped, parsimmon.noneOf('"')).many().tie(),
       quote: () => parsimmon.string('"'),
-      quoted: (l) => l.phrase.trim(l.quote),
+      quoted: (l) => l.phrase.wrap(l.quote, l.quote.desc('closing "')),
       value: (l) => parsimmon.alt(l.identifier, l.quoted),
       term: (l) =>
         parsimmon
@@ -49,7 +49,9 @@ export class Parser {
           .node('Term'),
       nil: () => parsimmon.optWhitespace.result(['', '', '']).node('Term'),
       parenthetical: (l) =>
-        l.expression.wrap(l.lparen, l.rparen).node('Parenthetical'),
+        l.expression
+          .wrap(l.lparen, l.rparen.desc('closing )'))
+          .node('Parenthetical'),
       basic: (l) => parsimmon.alt(l.term, l.parenthetical),
       negation: (l) =>
         parsimmon.alt(
