@@ -1,6 +1,6 @@
 {
   "name": "crystal-query",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A simple query language with customizable semantics",
   "author": "ninevra",
   "license": "ISC",
