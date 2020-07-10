@@ -38,6 +38,13 @@ test('FieldTermHandler returns appropriate error on missing operators', (t) => {
   });
 });
 
+test('FieldTermHandler returns appropriate error on missing value', (t) => {
+  t.like(t.context.handler.get('', '>', ''), {
+    status: false,
+    error: `no value provided for term '>'; did you mean '">"'?`
+  });
+});
+
 test('FieldTermHandler relays errors from fields', (t) => {
   t.like(t.context.handler.get('number', '=', 'foo'), {
     status: false,

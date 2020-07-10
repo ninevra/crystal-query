@@ -6,15 +6,21 @@ export class FieldTermHandler {
     {
       errors: {
         missingField = messages.errorMissingField,
-        missingOperator = messages.errorMissingOperator
+        missingOperator = messages.errorMissingOperator,
+        missingValue = messages.errorMissingValue
       } = {}
     } = {}
   ) {
     this.fields = fields;
-    this.errorDesciptors = { missingField, missingOperator };
+    this.errorDesciptors = { missingField, missingOperator, missingValue };
   }
   get(name, operator, value) {
-    if (!this.fields[name]) {
+    if (value === '') {
+      return {
+        status: false,
+        error: this.errorDesciptors.missingValue({ name, operator })
+      };
+    } else if (!this.fields[name]) {
       return {
         status: false,
         error: this.errorDesciptors.missingField({ name })
