@@ -20,10 +20,12 @@
     "clean": "rm -rf lib/",
     "prebuild": "npm run clean",
     "build": "babel src -d lib/ --source-maps true --copy-files",
+    "prepublishOnly": "npm run format:check && npm test && npm run build",
     "pretest": "npm run build",
     "test": "c8 ava",
     "test:debug": "ava debug --break",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "format:watch": "onchange 'src/**/*.js' -- prettier --write {{changed}}",
     "snaps:update": "ava --update-snapshots"
   },
@@ -43,7 +45,6 @@
     "files": [
       "lib/**/*.test.*"
     ],
-    "verbose": true,
     "nonSemVerExperiments": {
       "likeAssertion": true
     },
