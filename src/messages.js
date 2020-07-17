@@ -72,10 +72,6 @@ export function errorMissingOperator({ name, operator }) {
   return `can't use "${operator}" on field "${name}"`;
 }
 
-export function errorMissingValue({ name, operator }) {
-  return `no value provided for term '${name}${operator}'; did you mean '"${name}${operator}"'?`;
-}
-
 export function errorWrongType({ type, value }) {
   return `expected a ${type}, not "${value}"`;
 }
