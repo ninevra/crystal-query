@@ -40,6 +40,17 @@ test('NumberPropertyField rejects non-number queries', (t) => {
   });
 });
 
+test('NumberPropertyField rejects blank queries', (t) => {
+  t.like(t.context.number[':'](''), {
+    status: false,
+    error: messages.errorWrongType({ type: 'number', value: '' })
+  });
+  t.like(t.context.number[':'](' '), {
+    status: false,
+    error: messages.errorWrongType({ type: 'number', value: ' ' })
+  });
+});
+
 test('NumberPropertyField supports ">"', (t) => {
   const field = t.context.number['>'](-4.5);
   t.is(field.describe(), 'a number is greater than -4.5');
