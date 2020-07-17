@@ -7,7 +7,7 @@ export class NumberPropertyField {
     this.property = property;
   }
   makeResponse(value, func) {
-    const castValue = Number(value);
+    const castValue = /^\s*$/.test(value) ? NaN : Number(value);
     if (Number.isNaN(castValue)) {
       return {
         status: false,
