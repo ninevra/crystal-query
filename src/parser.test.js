@@ -270,17 +270,22 @@ test("strange/invalid terms don't cause fatal errors", (t) => {
     status: true,
     value: { name: 'Term', value: ['', '>', ''] }
   });
-  let result = expression.parse('foo>>bar'); // foo and > and >bar
+  let result = expression.parse('foo>>bar'); // foo> and >bar
   assertStructure(t, result.value, [
     'And',
-    ['Term', '', '', 'foo'],
-    ['And', ['Term', '', '>', ''], ['Term', '', '>', 'bar']]
+    ['Term', 'foo', '>', ''],
+    ['Term', '', '>', 'bar']
   ]);
   assertStructure(t, expression.parse('foo: bar').value, [
     'And',
-    ['Term', '', '', 'foo'],
-    ['And', ['Term', '', ':', ''], ['Term', '', '', 'bar']]
-  ]); // foo and : and bar
+    ['Term', 'foo', ':', ''],
+    ['Term', '', '', 'bar']
+  ]); // foo: and bar
+  assertStructure(t, expression.parse('::bar').value, [
+    'And',
+    ['Term', '', ':', ''],
+    ['Term', '', ':', 'bar']
+  ]);
 });
 
 test("malformed conjunctions don't cause fatal errors", (t) => {

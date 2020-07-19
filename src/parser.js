@@ -42,6 +42,7 @@ export class Parser {
         parsimmon
           .alt(
             parsimmon.seq(l.identifier, l.operator, l.value),
+            parsimmon.seq(l.identifier, l.operator, parsimmon.of('')),
             parsimmon.seq(parsimmon.of(''), l.operator, l.value),
             parsimmon.seq(parsimmon.of(''), parsimmon.of(''), l.value),
             parsimmon.seq(parsimmon.of(''), l.operator, parsimmon.of(''))
