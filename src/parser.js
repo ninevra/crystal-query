@@ -1,15 +1,12 @@
 import parsimmon from 'parsimmon';
 
-export function makeParser(value) {
-  // TODO: also accept parsimmon parsers (test with Parsimmon.isParser()),
-  // regexes (test how?)
-  return parsimmon.string(value);
-}
-
 export class Parser {
-  constructor({ operators = [':', '>=', '<=', '<', '=', '>'] } = {}) {
+  constructor() {
     this.language = parsimmon.createLanguage({
-      operator: () => parsimmon.alt(...operators.map(makeParser)),
+      operator: () =>
+        parsimmon.alt(
+          ...[':', '>=', '<=', '<', '=', '>'].map(parsimmon.string)
+        ),
       and: (l) => l.word.assert((word) => word === 'and', 'and'),
       or: (l) => l.word.assert((word) => word === 'or', 'or'),
       not: (l) => l.word.assert((word) => word === 'not', 'not'),
