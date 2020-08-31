@@ -29,11 +29,11 @@ A term consists of a _field name_, an _operator_, and a _value_.
 
 A field name can be any word except the keywords `not`, `and`, and `or`.
 
-The list of operators is customizable; the default operators are `:`, `>`, `>=`, `=`, `<=`, and `<`.
+The operators are `:`, `>`, `>=`, `=`, `<=`, and `<`.
 
-A value can be any word except a keyword, or any string in double quotes (`"a string"`). Within a string, a literal `"` can be escaped with a backslash (`"\""`).
+A value can be any word except a keyword, or any string in double quotes (`"a string"`). Within a string, `\` escapes the following character (`"a double quote: \" and a backslash: \\"`).
 
-The field name, or the field name and the operator both, can be omitted.
+Components of a term can be omitted.
 
 Some valid fields: `foo:bar`, `foo:"bar"`, `foo>3`, `="bar"`, `foo`, `3`, `"foo bar"`.
 
@@ -53,15 +53,14 @@ Terms can also be listed, which is equivalent to combining them with `and`.
 
 ### class Schema
 
-A `Schema` represents a semantic interpretation of the language. It defines what operators exist and how terms are transformed into predicates.
+A `Schema` represents a semantic interpretation of the language. It defines how terms are transformed into predicates and descriptions.
 
 #### new Schema(options)
 
 Accepts:
 
-```JavaScript
+```javascript
 {
-  operators,
   termHandler,
   descriptors: {
     conjunction,
@@ -75,11 +74,11 @@ Accepts:
 
 Returns:
 
-```JavaScript
+```javascript
 {
   status,
   description,
-  evaluate,
+  predicate,
   errors: [],
   ast
 }
@@ -111,7 +110,7 @@ Returns an object `{describe, predicate}`.
 
 `GenericTermHandler` is meant to provide reasonable starting behavior when setting up `crystal-query`. Most applications will want to configure and use a `FieldTermHandler` instead.
 
-A `GenericTermHandler` maps non-empty field names to properties of the input value. It accepts all possible fields, but understands only the default operators, and mostly gives them their default behavior in javascript; so, for example, the term `foo>=3` is translated to `(input) => input?.foo >= '3'`. The operator `=` is translated to `==`. The operator `:` is translated to `includes()`, e.g. `foo:3` to `(input) => input?.includes?.('3')`. Operators outside of the default list produce fields that always evaluate to false.
+A `GenericTermHandler` maps non-empty field names to properties of the input value. It accepts all possible fields, but understands only the default operators, and mostly gives them their default behavior in javascript; so, for example, the term `foo>=3` is translated to `(input) => input?.foo >= '3'`. The operator `=` is translated to `==`. The operator `:` is translated to `includes()`, e.g. `foo:3` to `(input) => input?.includes?.('3')`.
 
 ### class FieldTermHandler
 
