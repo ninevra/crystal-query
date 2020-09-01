@@ -147,7 +147,7 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
     status: true,
     value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } }
   });
-  let result = conjunction.parse('not foo and not bar');
+  const result = conjunction.parse('not foo and not bar');
   t.like(result, { status: true, value: { name: 'And' } });
   t.like(result.value.value[0], {
     name: 'Not',
@@ -161,7 +161,7 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
 
 test('language.conjunction recognizes lists of terms', (t) => {
   const { conjunction } = new Parser().language;
-  let result = conjunction.parse('a b');
+  const result = conjunction.parse('a b');
   t.like(result, { status: true, value: { name: 'And' } });
   t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
   t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
@@ -169,7 +169,7 @@ test('language.conjunction recognizes lists of terms', (t) => {
 
 test('language.conjunction lists have higher precedence than "or"', (t) => {
   const { disjunction } = new Parser().language;
-  let result = disjunction.parse('a or b c');
+  const result = disjunction.parse('a or b c');
   t.like(result, { status: true, value: { name: 'Or' } });
   t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
   t.like(result.value.value[1], { name: 'And' });
@@ -192,7 +192,7 @@ test('language.disjunction recognizes terms, disjunctions', (t) => {
       value: ['foo', ':', 'bar']
     }
   });
-  let result = disjunction.parse('a or b');
+  const result = disjunction.parse('a or b');
   t.like(result, { status: true, value: { name: 'Or' } });
   t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
   t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
@@ -200,7 +200,7 @@ test('language.disjunction recognizes terms, disjunctions', (t) => {
 
 test('language.disjunction places "and" at higher precedence than "or"', (t) => {
   const disjunction = new Parser().language.disjunction;
-  let result = disjunction.parse('not a or b and c');
+  const result = disjunction.parse('not a or b and c');
   t.like(result, { status: true, value: { name: 'Or' } });
   t.like(result.value.value[0], {
     name: 'Not',
@@ -211,7 +211,7 @@ test('language.disjunction places "and" at higher precedence than "or"', (t) => 
 
 test('language.parenthetical recognizes parenthetical expressions', (t) => {
   const { parenthetical } = new Parser().language;
-  let result = parenthetical.parse('(a b)');
+  const result = parenthetical.parse('(a b)');
   t.like(result, {
     status: true,
     value: { name: 'Parenthetical', value: { name: 'And' } }
@@ -220,7 +220,7 @@ test('language.parenthetical recognizes parenthetical expressions', (t) => {
 
 test('language.parenthetical has higher precedence than "and"', (t) => {
   const { conjunction } = new Parser().language;
-  let result = conjunction.parse('(a or b) and c');
+  const result = conjunction.parse('(a or b) and c');
   t.like(result, { status: true, value: { name: 'And' } });
   t.like(result.value.value[0], {
     name: 'Parenthetical',
@@ -270,7 +270,7 @@ test("strange/invalid terms don't cause fatal errors", (t) => {
     status: true,
     value: { name: 'Term', value: ['', '>', ''] }
   });
-  let result = expression.parse('foo>>bar'); // foo> and >bar
+  const result = expression.parse('foo>>bar'); // Foo> and >bar
   assertStructure(t, result.value, [
     'And',
     ['Term', 'foo', '>', ''],
@@ -280,7 +280,7 @@ test("strange/invalid terms don't cause fatal errors", (t) => {
     'And',
     ['Term', 'foo', ':', ''],
     ['Term', '', '', 'bar']
-  ]); // foo: and bar
+  ]); // Foo: and bar
   assertStructure(t, expression.parse('::bar').value, [
     'And',
     ['Term', '', ':', ''],

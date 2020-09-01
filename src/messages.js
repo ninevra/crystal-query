@@ -25,6 +25,7 @@ export function fieldContains({ name, plural, value, negated }) {
   } else if (!plural && !negated) {
     verb = 'contains';
   }
+
   return `${name} ${verb} ${value}`;
 }
 
@@ -39,6 +40,7 @@ export function fieldEquals({ name, plural, value, negated }) {
   } else if (!plural && !negated) {
     verb = 'equals';
   }
+
   return `${name} ${verb} ${value}`;
 }
 

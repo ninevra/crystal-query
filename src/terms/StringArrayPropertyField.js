@@ -7,6 +7,7 @@ export class StringArrayPropertyField {
     this.property = property;
     this.caseSensitive = caseSensitive;
   }
+
   ':'(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {

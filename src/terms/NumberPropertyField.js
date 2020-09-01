@@ -6,20 +6,23 @@ export class NumberPropertyField {
     this.plural = plural;
     this.property = property;
   }
+
   makeResponse(value, func) {
-    const castValue = /^\s*$/.test(value) ? NaN : Number(value);
+    const castValue = /^\s*$/.test(value) ? Number.NaN : Number(value);
     if (Number.isNaN(castValue)) {
       return {
         status: false,
         error: messages.errorWrongType({ type: 'number', value })
       };
-    } else {
-      return { status: true, ...func(castValue) };
     }
+
+    return { status: true, ...func(castValue) };
   }
+
   makeMessageArg({ value, negated }) {
     return { name: this.name, plural: this.plural, value, negated };
   }
+
   ':'(value) {
     return this.makeResponse(value, (value) => ({
       describe: (negated) =>
@@ -27,6 +30,7 @@ export class NumberPropertyField {
       predicate: (input) => input?.[this.property] === value
     }));
   }
+
   '>'(value) {
     return this.makeResponse(value, (value) => ({
       describe: (negated) =>
@@ -34,6 +38,7 @@ export class NumberPropertyField {
       predicate: (input) => input?.[this.property] > value
     }));
   }
+
   '>='(value) {
     return this.makeResponse(value, (value) => ({
       describe: (negated) =>
@@ -41,6 +46,7 @@ export class NumberPropertyField {
       predicate: (input) => input?.[this.property] >= value
     }));
   }
+
   '<='(value) {
     return this.makeResponse(value, (value) => ({
       describe: (negated) =>
@@ -48,6 +54,7 @@ export class NumberPropertyField {
       predicate: (input) => input?.[this.property] <= value
     }));
   }
+
   '<'(value) {
     return this.makeResponse(value, (value) => ({
       describe: (negated) =>

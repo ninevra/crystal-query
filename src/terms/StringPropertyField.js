@@ -7,6 +7,7 @@ export class StringPropertyField {
     this.property = property;
     this.caseSensitive = caseSensitive;
   }
+
   makeMessageArg({ value, negated }) {
     return {
       name: this.name,
@@ -15,6 +16,7 @@ export class StringPropertyField {
       value: `"${value}"`
     };
   }
+
   ':'(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {
@@ -28,6 +30,7 @@ export class StringPropertyField {
       }
     };
   }
+
   '='(value) {
     const casedValue = this.caseSensitive ? value : value.toUpperCase();
     return {

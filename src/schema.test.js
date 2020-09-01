@@ -53,7 +53,7 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
       bar: new NumberPropertyField('bar', false, 'bar')
     })
   });
-  let result = schema.parse('foo>bar <2 bar:baz baz:foo');
+  const result = schema.parse('foo>bar <2 bar:baz baz:foo');
   t.like(result, {
     status: false
   });
@@ -88,7 +88,7 @@ test('query() returns all applicable of ast, description, evaluator, errors', (t
     description: 'not ("a" or b:"c d") and e>"3"',
     errors: []
   });
-  t.true(result.predicate({ e: 4, b: NaN }));
+  t.true(result.predicate({ e: 4, b: Number.NaN }));
   t.false(result.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';

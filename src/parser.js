@@ -5,7 +5,9 @@ export class Parser {
     this.language = parsimmon.createLanguage({
       operator: () =>
         parsimmon.alt(
-          ...[':', '>=', '<=', '<', '=', '>'].map(parsimmon.string)
+          ...[':', '>=', '<=', '<', '=', '>'].map((operator) =>
+            parsimmon.string(operator)
+          )
         ),
       and: (l) => l.word.assert((word) => word === 'and', 'and'),
       or: (l) => l.word.assert((word) => word === 'or', 'or'),
