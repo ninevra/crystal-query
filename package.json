@@ -22,12 +22,14 @@
     "build": "babel src -d lib/ --source-maps true --copy-files",
     "prepublishOnly": "npm run format:check && npm test && npm run build",
     "pretest": "npm run build",
-    "test": "c8 ava",
+    "test": "npm run lint && c8 ava",
     "test:debug": "ava debug --break",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:watch": "onchange 'src/**/*.js' -- prettier --write {{changed}}",
-    "snaps:update": "ava --update-snapshots"
+    "snaps:update": "ava --update-snapshots",
+    "lint": "xo",
+    "lint:fix": "xo --fix"
   },
   "dependencies": {
     "parsimmon": "^1.13.0"
@@ -39,7 +41,8 @@
     "ava": "^3.9.0",
     "c8": "^7.2.0",
     "onchange": "^7.0.2",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "xo": "^0.33.1"
   },
   "ava": {
     "files": [
@@ -52,6 +55,16 @@
   },
   "prettier": {
     "singleQuote": true,
-    "trailingComma": "none"
+    "trailingComma": "none",
+    "bracketSpacing": true
+  },
+  "xo": {
+    "prettier": true,
+    "space": true,
+    "rules": {
+      "import/extensions": ["error", "always"],
+      "ava/no-ignored-test-files": "off",
+      "unicorn/filename-case": "warn"
+    }
   }
 }
