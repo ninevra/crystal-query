@@ -59,7 +59,9 @@ test('language.term recognizes terms', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['', '', 'foo'],
+      field: '',
+      operator: '',
+      value: 'foo',
       start: { offset: 0, line: 1, column: 1 },
       end: { offset: 3, line: 1, column: 4 }
     }
@@ -68,7 +70,9 @@ test('language.term recognizes terms', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['foo', ':', 'bar'],
+      field: 'foo',
+      operator: ':',
+      value: 'bar',
       start: { offset: 0, line: 1, column: 1 },
       end: { offset: 7, line: 1, column: 8 }
     }
@@ -77,12 +81,19 @@ test('language.term recognizes terms', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['', '>', '2']
+      field: '',
+      operator: '>',
+      value: '2'
     }
   });
   t.like(term.parse('foo:"bar"'), {
     status: true,
-    value: { name: 'Term', value: ['foo', ':', 'bar'] }
+    value: {
+      name: 'Term',
+      field: 'foo',
+      operator: ':',
+      value: 'bar'
+    }
   });
 });
 
@@ -98,9 +109,11 @@ test('language.negation recognizes negations', (t) => {
     status: true,
     value: {
       name: 'Not',
-      value: {
+      child: {
         name: 'Term',
-        value: ['', '', 'foo']
+        field: '',
+        operator: '',
+        value: 'foo'
       }
     }
   });
@@ -108,18 +121,23 @@ test('language.negation recognizes negations', (t) => {
     status: true,
     value: {
       name: 'Not',
-      value: {
+      child: {
         name: 'Not',
-        value: {
+        child: {
           name: 'Term',
-          value: ['', '', 'foo']
+          field: '',
+          operator: '',
+          value: 'foo'
         }
       }
     }
   });
   t.like(negation.parse('not"foo"'), {
     status: true,
-    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } }
+    value: {
+      name: 'Not',
+      child: { name: 'Term', field: '', operator: '', value: 'foo' }
+    }
   });
 });
 
@@ -129,7 +147,9 @@ test('language.negation recognizes "nota" as a term, not a negation', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['', '', 'nota']
+      field: '',
+      operator: '',
+      value: 'nota'
     }
   });
 });
@@ -140,46 +160,62 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
     status: true,
     value: {
       name: 'Term',
-      value: ['foo', ':', 'bar']
+      field: 'foo',
+      operator: ':',
+      value: 'bar'
     }
   });
   t.like(conjunction.parse('not foo'), {
     status: true,
-    value: { name: 'Not', value: { name: 'Term', value: ['', '', 'foo'] } }
+    value: {
+      name: 'Not',
+      child: { name: 'Term', field: '', operator: '', value: 'foo' }
+    }
   });
   const result = conjunction.parse('not foo and not bar');
-  t.like(result, { status: true, value: { name: 'And' } });
-  t.like(result.value.value[0], {
-    name: 'Not',
-    value: { name: 'Term', value: ['', '', 'foo'] }
-  });
-  t.like(result.value.value[1], {
-    name: 'Not',
-    value: { name: 'Term', value: ['', '', 'bar'] }
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'And',
+      left: {
+        name: 'Not',
+        child: { name: 'Term', field: '', operator: '', value: 'foo' }
+      },
+      right: {
+        name: 'Not',
+        child: { name: 'Term', field: '', operator: '', value: 'bar' }
+      }
+    }
   });
 });
 
 test('language.conjunction recognizes lists of terms', (t) => {
   const { conjunction } = new Parser().language;
   const result = conjunction.parse('a b');
-  t.like(result, { status: true, value: { name: 'And' } });
-  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
-  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'And',
+      left: { name: 'Term', field: '', operator: '', value: 'a' },
+      right: { name: 'Term', field: '', operator: '', value: 'b' }
+    }
+  });
 });
 
 test('language.conjunction lists have higher precedence than "or"', (t) => {
   const { disjunction } = new Parser().language;
   const result = disjunction.parse('a or b c');
-  t.like(result, { status: true, value: { name: 'Or' } });
-  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
-  t.like(result.value.value[1], { name: 'And' });
-  t.like(result.value.value[1].value[0], {
-    name: 'Term',
-    value: ['', '', 'b']
-  });
-  t.like(result.value.value[1].value[1], {
-    name: 'Term',
-    value: ['', '', 'c']
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'Or',
+      left: { name: 'Term', field: '', operator: '', value: 'a' },
+      right: {
+        name: 'And',
+        left: { name: 'Term', field: '', operator: '', value: 'b' },
+        right: { name: 'Term', field: '', operator: '', value: 'c' }
+      }
+    }
   });
 });
 
@@ -189,24 +225,36 @@ test('language.disjunction recognizes terms, disjunctions', (t) => {
     status: true,
     value: {
       name: 'Term',
-      value: ['foo', ':', 'bar']
+      field: 'foo',
+      operator: ':',
+      value: 'bar'
     }
   });
   const result = disjunction.parse('a or b');
-  t.like(result, { status: true, value: { name: 'Or' } });
-  t.like(result.value.value[0], { name: 'Term', value: ['', '', 'a'] });
-  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'b'] });
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'Or',
+      left: { name: 'Term', field: '', operator: '', value: 'a' },
+      right: { name: 'Term', field: '', operator: '', value: 'b' }
+    }
+  });
 });
 
 test('language.disjunction places "and" at higher precedence than "or"', (t) => {
   const disjunction = new Parser().language.disjunction;
   const result = disjunction.parse('not a or b and c');
-  t.like(result, { status: true, value: { name: 'Or' } });
-  t.like(result.value.value[0], {
-    name: 'Not',
-    value: { name: 'Term', value: ['', '', 'a'] }
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'Or',
+      left: {
+        name: 'Not',
+        child: { name: 'Term', field: '', operator: '', value: 'a' }
+      },
+      right: { name: 'And' }
+    }
   });
-  t.like(result.value.value[1], { name: 'And' });
 });
 
 test('language.parenthetical recognizes parenthetical expressions', (t) => {
@@ -214,19 +262,29 @@ test('language.parenthetical recognizes parenthetical expressions', (t) => {
   const result = parenthetical.parse('(a b)');
   t.like(result, {
     status: true,
-    value: { name: 'Parenthetical', value: { name: 'And' } }
+    value: { name: 'Parenthetical', expression: { name: 'And' } }
   });
 });
 
 test('language.parenthetical has higher precedence than "and"', (t) => {
   const { conjunction } = new Parser().language;
   const result = conjunction.parse('(a or b) and c');
-  t.like(result, { status: true, value: { name: 'And' } });
-  t.like(result.value.value[0], {
-    name: 'Parenthetical',
-    value: { name: 'Or' }
+  t.like(result, {
+    status: true,
+    value: {
+      name: 'And',
+      left: {
+        name: 'Parenthetical',
+        expression: { name: 'Or' }
+      },
+      right: {
+        name: 'Term',
+        field: '',
+        operator: '',
+        value: 'c'
+      }
+    }
   });
-  t.like(result.value.value[1], { name: 'Term', value: ['', '', 'c'] });
 });
 
 test('empty expressions', (t) => {
@@ -240,98 +298,77 @@ test('empty expressions', (t) => {
   result = expression.parse('not ()');
   t.like(result, {
     status: true,
-    value: { name: 'Not', value: { name: 'Parenthetical' } }
+    value: { name: 'Not', child: { name: 'Parenthetical' } }
   });
 });
-
-function assertStructure(t, actual, structure) {
-  if (structure[0] === 'And' || structure[0] === 'Or') {
-    t.like(actual, { name: structure[0] });
-    assertStructure(t, actual.value[0], structure[1]);
-    assertStructure(t, actual.value[1], structure[2]);
-  } else if (structure[0] === 'Not' || structure[0] === 'Parenthetical') {
-    t.like(actual, { name: structure[0] });
-    assertStructure(t, actual.value, structure[1]);
-  } else if (structure[0] === 'Term') {
-    t.like(actual, { name: structure[0], value: structure.slice(1) });
-  } else {
-    t.fail(`unexpected structure element ${structure[0]}`);
-  }
-}
-
-function assertResultStructure(t, result, structure) {
-  t.like(result, { status: true });
-  assertStructure(t, result.value, structure);
-}
 
 test("strange/invalid terms don't cause fatal errors", (t) => {
   const { term, expression } = new Parser().language;
   t.like(term.parse('>'), {
     status: true,
-    value: { name: 'Term', value: ['', '>', ''] }
+    value: { name: 'Term', field: '', operator: '>', value: '' }
   });
-  const result = expression.parse('foo>>bar'); // Foo> and >bar
-  assertStructure(t, result.value, [
-    'And',
-    ['Term', 'foo', '>', ''],
-    ['Term', '', '>', 'bar']
-  ]);
-  assertStructure(t, expression.parse('foo: bar').value, [
-    'And',
-    ['Term', 'foo', ':', ''],
-    ['Term', '', '', 'bar']
-  ]); // Foo: and bar
-  assertStructure(t, expression.parse('::bar').value, [
-    'And',
-    ['Term', '', ':', ''],
-    ['Term', '', ':', 'bar']
-  ]);
+  t.like(expression.parse('foo>>bar').value, {
+    name: 'And',
+    left: { name: 'Term', field: 'foo', operator: '>', value: '' },
+    right: { name: 'Term', field: '', operator: '>', value: 'bar' }
+  });
+  t.like(expression.parse('foo: bar').value, {
+    name: 'And',
+    left: { name: 'Term', field: 'foo', operator: ':', value: '' },
+    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+  });
+  t.like(expression.parse('::bar').value, {
+    name: 'And',
+    left: { name: 'Term', field: '', operator: ':', value: '' },
+    right: { name: 'Term', field: '', operator: ':', value: 'bar' }
+  });
 });
 
 test("malformed conjunctions don't cause fatal errors", (t) => {
   const { conjunction } = new Parser().language;
-  assertResultStructure(t, conjunction.parse('and'), [
-    'And',
-    ['Term', '', '', ''],
-    ['Term', '', '', '']
-  ]);
-  assertResultStructure(t, conjunction.parse('foo and '), [
-    'And',
-    ['Term', '', '', 'foo'],
-    ['Term', '', '', '']
-  ]);
-  assertResultStructure(t, conjunction.parse('and bar'), [
-    'And',
-    ['Term', '', '', ''],
-    ['Term', '', '', 'bar']
-  ]);
+  t.like(conjunction.parse('and').value, {
+    name: 'And',
+    left: { name: 'Term', field: '', operator: '', value: '' },
+    right: { name: 'Term', field: '', operator: '', value: '' }
+  });
+  t.like(conjunction.parse('foo and ').value, {
+    name: 'And',
+    left: { name: 'Term', field: '', operator: '', value: 'foo' },
+    right: { name: 'Term', field: '', operator: '', value: '' }
+  });
+  t.like(conjunction.parse('and bar').value, {
+    name: 'And',
+    left: { name: 'Term', field: '', operator: '', value: '' },
+    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+  });
 });
 
 test("malformed disjunctions don't cause fatal errors", (t) => {
   const { disjunction } = new Parser().language;
-  assertResultStructure(t, disjunction.parse('or'), [
-    'Or',
-    ['Term', '', '', ''],
-    ['Term', '', '', '']
-  ]);
-  assertResultStructure(t, disjunction.parse('foo or'), [
-    'Or',
-    ['Term', '', '', 'foo'],
-    ['Term', '', '', '']
-  ]);
-  assertResultStructure(t, disjunction.parse('or bar'), [
-    'Or',
-    ['Term', '', '', ''],
-    ['Term', '', '', 'bar']
-  ]);
+  t.like(disjunction.parse('or').value, {
+    name: 'Or',
+    left: { name: 'Term', field: '', operator: '', value: '' },
+    right: { name: 'Term', field: '', operator: '', value: '' }
+  });
+  t.like(disjunction.parse('foo or').value, {
+    name: 'Or',
+    left: { name: 'Term', field: '', operator: '', value: 'foo' },
+    right: { name: 'Term', field: '', operator: '', value: '' }
+  });
+  t.like(disjunction.parse('or bar').value, {
+    name: 'Or',
+    left: { name: 'Term', field: '', operator: '', value: '' },
+    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+  });
 });
 
 test("malformed negations don't cause fatal errors", (t) => {
   const { negation } = new Parser().language;
-  assertResultStructure(t, negation.parse('not'), [
-    'Not',
-    ['Term', '', '', '']
-  ]);
+  t.like(negation.parse('not').value, {
+    name: 'Not',
+    child: { name: 'Term', field: '', operator: '', value: '' }
+  });
 });
 
 test("surrounding whitespace doesn't break parsers", (t) => {

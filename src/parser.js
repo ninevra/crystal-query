@@ -1,5 +1,12 @@
 import parsimmon from 'parsimmon';
 
+function node(name) {
+  return (parser) =>
+    parsimmon
+      .seq(parsimmon.index, parser, parsimmon.index)
+      .map(([start, value, end]) => ({ start, end, name, ...value }));
+}
+
 export class Parser {
   constructor() {
     this.language = parsimmon.createLanguage({
@@ -46,18 +53,32 @@ export class Parser {
             parsimmon.seq(parsimmon.of(''), parsimmon.of(''), l.value),
             parsimmon.seq(parsimmon.of(''), l.operator, parsimmon.of(''))
           )
-          .node('Term'),
-      nil: () => parsimmon.optWhitespace.result(['', '', '']).node('Term'),
+          .map(([field, operator, value]) => ({
+            field,
+            operator,
+            value
+          }))
+          .thru(node('Term')),
+      nil: () =>
+        parsimmon.optWhitespace
+          .result({ field: '', operator: '', value: '' })
+          .thru(node('Term')),
       parenthetical: (l) =>
         l.expression
           .wrap(l.lparen, l.rparen.desc('closing )'))
-          .node('Parenthetical'),
+          .map((expression) => ({
+            expression
+          }))
+          .thru(node('Parenthetical')),
       basic: (l) => parsimmon.alt(l.term, l.parenthetical),
       negation: (l) =>
         parsimmon.alt(
           l.not
             .then(parsimmon.optWhitespace.then(l.negation).or(l.nil))
-            .node('Not'),
+            .map((child) => ({
+              child
+            }))
+            .thru(node('Not')),
           l.basic
         ),
       conjunction: (l) =>
@@ -67,10 +88,18 @@ export class Parser {
               l.negation.or(l.nil).skip(parsimmon.optWhitespace).skip(l.and),
               parsimmon.optWhitespace.then(l.conjunction).or(l.nil)
             )
-            .node('And'),
+            .map(([left, right]) => ({
+              left,
+              right
+            }))
+            .thru(node('And')),
           parsimmon
             .seq(l.negation.skip(parsimmon.optWhitespace), l.conjunction)
-            .node('And'),
+            .map(([left, right]) => ({
+              left,
+              right
+            }))
+            .thru(node('And')),
           l.negation
         ),
       disjunction: (l) =>
@@ -80,7 +109,11 @@ export class Parser {
               l.conjunction.or(l.nil).skip(parsimmon.optWhitespace).skip(l.or),
               parsimmon.optWhitespace.then(l.disjunction).or(l.nil)
             )
-            .node('Or'),
+            .map(([left, right]) => ({
+              left,
+              right
+            }))
+            .thru(node('Or')),
           l.conjunction
         ),
       expression: (l) =>

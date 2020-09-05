@@ -67,25 +67,28 @@ export class Schema {
     switch (astNode.name) {
       case 'And':
         return this.descriptors.conjunction({
-          left: this.describeNode(astNode.value[0]),
-          right: this.describeNode(astNode.value[1])
+          left: this.describeNode(astNode.left),
+          right: this.describeNode(astNode.right)
         });
       case 'Or':
         return this.descriptors.disjunction({
-          left: this.describeNode(astNode.value[0]),
-          right: this.describeNode(astNode.value[1])
+          left: this.describeNode(astNode.left),
+          right: this.describeNode(astNode.right)
         });
       case 'Not':
-        return this.describeNode(astNode.value, !negated);
+        return this.describeNode(astNode.child, !negated);
       case 'Nil':
         return '';
       case 'Parenthetical':
         return this.descriptors.parenthetical({
-          expression: this.describeNode(astNode.value),
+          expression: this.describeNode(astNode.expression),
           negated
         });
-      case 'Term':
-        return this.termHandler.get(...astNode.value).describe(negated);
+      case 'Term': {
+        const { field, operator, value } = astNode;
+        return this.termHandler.get(field, operator, value).describe(negated);
+      }
+
       default:
         throw new InvalidNodeError(astNode);
     }
@@ -96,16 +99,22 @@ export class Schema {
       case 'And':
       case 'Or':
         return [
-          ...this.validateNode(astNode.value[0]),
-          ...this.validateNode(astNode.value[1])
+          ...this.validateNode(astNode.left),
+          ...this.validateNode(astNode.right)
         ];
       case 'Not':
+        return this.validateNode(astNode.child);
       case 'Parenthetical':
-        return this.validateNode(astNode.value);
+        return this.validateNode(astNode.expression);
       case 'Nil':
         return [];
       case 'Term': {
-        const { status, error } = this.termHandler.get(...astNode.value);
+        const { field, operator, value: termValue } = astNode;
+        const { status, error } = this.termHandler.get(
+          field,
+          operator,
+          termValue
+        );
         if (status) {
           return [];
         }
@@ -128,28 +137,31 @@ export class Schema {
   evaluateNode(astNode) {
     switch (astNode.name) {
       case 'And': {
-        const left = this.evaluateNode(astNode.value[0]);
-        const right = this.evaluateNode(astNode.value[1]);
+        const left = this.evaluateNode(astNode.left);
+        const right = this.evaluateNode(astNode.right);
         return (input) => left(input) && right(input);
       }
 
       case 'Or': {
-        const left = this.evaluateNode(astNode.value[0]);
-        const right = this.evaluateNode(astNode.value[1]);
+        const left = this.evaluateNode(astNode.left);
+        const right = this.evaluateNode(astNode.right);
         return (input) => left(input) || right(input);
       }
 
       case 'Not': {
-        const child = this.evaluateNode(astNode.value);
+        const child = this.evaluateNode(astNode.child);
         return (input) => !child(input);
       }
 
-      case 'Term':
-        return this.termHandler.get(...astNode.value).predicate;
+      case 'Term': {
+        const { field, operator, value } = astNode;
+        return this.termHandler.get(field, operator, value).predicate;
+      }
+
       case 'Nil':
         return () => false;
       case 'Parenthetical': {
-        const child = this.evaluateNode(astNode.value);
+        const child = this.evaluateNode(astNode.expression);
         return (input) => child(input);
       }
 
