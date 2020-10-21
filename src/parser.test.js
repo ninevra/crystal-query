@@ -59,8 +59,8 @@ test('language.term recognizes terms', (t) => {
     status: true,
     value: {
       name: 'Term',
-      field: '',
-      operator: '',
+      field: undefined,
+      operator: undefined,
       value: 'foo',
       start: { offset: 0, line: 1, column: 1 },
       end: { offset: 3, line: 1, column: 4 }
@@ -81,7 +81,7 @@ test('language.term recognizes terms', (t) => {
     status: true,
     value: {
       name: 'Term',
-      field: '',
+      field: undefined,
       operator: '>',
       value: '2'
     }
@@ -111,8 +111,8 @@ test('language.negation recognizes negations', (t) => {
       name: 'Not',
       child: {
         name: 'Term',
-        field: '',
-        operator: '',
+        field: undefined,
+        operator: undefined,
         value: 'foo'
       }
     }
@@ -125,8 +125,8 @@ test('language.negation recognizes negations', (t) => {
         name: 'Not',
         child: {
           name: 'Term',
-          field: '',
-          operator: '',
+          field: undefined,
+          operator: undefined,
           value: 'foo'
         }
       }
@@ -136,7 +136,12 @@ test('language.negation recognizes negations', (t) => {
     status: true,
     value: {
       name: 'Not',
-      child: { name: 'Term', field: '', operator: '', value: 'foo' }
+      child: {
+        name: 'Term',
+        field: undefined,
+        operator: undefined,
+        value: 'foo'
+      }
     }
   });
 });
@@ -147,8 +152,8 @@ test('language.negation recognizes "nota" as a term, not a negation', (t) => {
     status: true,
     value: {
       name: 'Term',
-      field: '',
-      operator: '',
+      field: undefined,
+      operator: undefined,
       value: 'nota'
     }
   });
@@ -169,7 +174,12 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
     status: true,
     value: {
       name: 'Not',
-      child: { name: 'Term', field: '', operator: '', value: 'foo' }
+      child: {
+        name: 'Term',
+        field: undefined,
+        operator: undefined,
+        value: 'foo'
+      }
     }
   });
   const result = conjunction.parse('not foo and not bar');
@@ -179,11 +189,21 @@ test('language.conjunction recognizes terms, negations, and conjunctions', (t) =
       name: 'And',
       left: {
         name: 'Not',
-        child: { name: 'Term', field: '', operator: '', value: 'foo' }
+        child: {
+          name: 'Term',
+          field: undefined,
+          operator: undefined,
+          value: 'foo'
+        }
       },
       right: {
         name: 'Not',
-        child: { name: 'Term', field: '', operator: '', value: 'bar' }
+        child: {
+          name: 'Term',
+          field: undefined,
+          operator: undefined,
+          value: 'bar'
+        }
       }
     }
   });
@@ -196,8 +216,8 @@ test('language.conjunction recognizes lists of terms', (t) => {
     status: true,
     value: {
       name: 'And',
-      left: { name: 'Term', field: '', operator: '', value: 'a' },
-      right: { name: 'Term', field: '', operator: '', value: 'b' }
+      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
+      right: { name: 'Term', field: undefined, operator: undefined, value: 'b' }
     }
   });
 });
@@ -209,11 +229,21 @@ test('language.conjunction lists have higher precedence than "or"', (t) => {
     status: true,
     value: {
       name: 'Or',
-      left: { name: 'Term', field: '', operator: '', value: 'a' },
+      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
       right: {
         name: 'And',
-        left: { name: 'Term', field: '', operator: '', value: 'b' },
-        right: { name: 'Term', field: '', operator: '', value: 'c' }
+        left: {
+          name: 'Term',
+          field: undefined,
+          operator: undefined,
+          value: 'b'
+        },
+        right: {
+          name: 'Term',
+          field: undefined,
+          operator: undefined,
+          value: 'c'
+        }
       }
     }
   });
@@ -235,8 +265,8 @@ test('language.disjunction recognizes terms, disjunctions', (t) => {
     status: true,
     value: {
       name: 'Or',
-      left: { name: 'Term', field: '', operator: '', value: 'a' },
-      right: { name: 'Term', field: '', operator: '', value: 'b' }
+      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
+      right: { name: 'Term', field: undefined, operator: undefined, value: 'b' }
     }
   });
 });
@@ -250,7 +280,12 @@ test('language.disjunction places "and" at higher precedence than "or"', (t) => 
       name: 'Or',
       left: {
         name: 'Not',
-        child: { name: 'Term', field: '', operator: '', value: 'a' }
+        child: {
+          name: 'Term',
+          field: undefined,
+          operator: undefined,
+          value: 'a'
+        }
       },
       right: { name: 'And' }
     }
@@ -279,8 +314,8 @@ test('language.parenthetical has higher precedence than "and"', (t) => {
       },
       right: {
         name: 'Term',
-        field: '',
-        operator: '',
+        field: undefined,
+        operator: undefined,
         value: 'c'
       }
     }
@@ -306,22 +341,22 @@ test("strange/invalid terms don't cause fatal errors", (t) => {
   const { term, expression } = new Parser().language;
   t.like(term.parse('>'), {
     status: true,
-    value: { name: 'Term', field: '', operator: '>', value: '' }
+    value: { name: 'Term', field: undefined, operator: '>', value: undefined }
   });
   t.like(expression.parse('foo>>bar').value, {
     name: 'And',
-    left: { name: 'Term', field: 'foo', operator: '>', value: '' },
-    right: { name: 'Term', field: '', operator: '>', value: 'bar' }
+    left: { name: 'Term', field: 'foo', operator: '>', value: undefined },
+    right: { name: 'Term', field: undefined, operator: '>', value: 'bar' }
   });
   t.like(expression.parse('foo: bar').value, {
     name: 'And',
-    left: { name: 'Term', field: 'foo', operator: ':', value: '' },
-    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+    left: { name: 'Term', field: 'foo', operator: ':', value: undefined },
+    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
   });
   t.like(expression.parse('::bar').value, {
     name: 'And',
-    left: { name: 'Term', field: '', operator: ':', value: '' },
-    right: { name: 'Term', field: '', operator: ':', value: 'bar' }
+    left: { name: 'Term', field: undefined, operator: ':', value: undefined },
+    right: { name: 'Term', field: undefined, operator: ':', value: 'bar' }
   });
 });
 
@@ -329,18 +364,38 @@ test("malformed conjunctions don't cause fatal errors", (t) => {
   const { conjunction } = new Parser().language;
   t.like(conjunction.parse('and').value, {
     name: 'And',
-    left: { name: 'Term', field: '', operator: '', value: '' },
-    right: { name: 'Term', field: '', operator: '', value: '' }
+    left: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    },
+    right: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    }
   });
   t.like(conjunction.parse('foo and ').value, {
     name: 'And',
-    left: { name: 'Term', field: '', operator: '', value: 'foo' },
-    right: { name: 'Term', field: '', operator: '', value: '' }
+    left: { name: 'Term', field: undefined, operator: undefined, value: 'foo' },
+    right: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    }
   });
   t.like(conjunction.parse('and bar').value, {
     name: 'And',
-    left: { name: 'Term', field: '', operator: '', value: '' },
-    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+    left: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    },
+    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
   });
 });
 
@@ -348,18 +403,38 @@ test("malformed disjunctions don't cause fatal errors", (t) => {
   const { disjunction } = new Parser().language;
   t.like(disjunction.parse('or').value, {
     name: 'Or',
-    left: { name: 'Term', field: '', operator: '', value: '' },
-    right: { name: 'Term', field: '', operator: '', value: '' }
+    left: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    },
+    right: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    }
   });
   t.like(disjunction.parse('foo or').value, {
     name: 'Or',
-    left: { name: 'Term', field: '', operator: '', value: 'foo' },
-    right: { name: 'Term', field: '', operator: '', value: '' }
+    left: { name: 'Term', field: undefined, operator: undefined, value: 'foo' },
+    right: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    }
   });
   t.like(disjunction.parse('or bar').value, {
     name: 'Or',
-    left: { name: 'Term', field: '', operator: '', value: '' },
-    right: { name: 'Term', field: '', operator: '', value: 'bar' }
+    left: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    },
+    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
   });
 });
 
@@ -367,7 +442,12 @@ test("malformed negations don't cause fatal errors", (t) => {
   const { negation } = new Parser().language;
   t.like(negation.parse('not').value, {
     name: 'Not',
-    child: { name: 'Term', field: '', operator: '', value: '' }
+    child: {
+      name: 'Term',
+      field: undefined,
+      operator: undefined,
+      value: undefined
+    }
   });
 });
 

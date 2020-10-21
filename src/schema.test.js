@@ -60,13 +60,17 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   t.is(result.errors.length, 4);
   t.like(result.errors[0], {
     type: 'field',
-    message: messages.errorMissingOperator({ name: 'foo', operator: '>' }),
+    message: messages.errorUnsupportedOperator({ name: 'foo', operator: '>' }),
     start: { offset: 0, line: 1, column: 1 },
     end: { offset: 7, line: 1, column: 8 }
   });
   t.like(result.errors[1], {
     type: 'field',
-    message: messages.errorMissingField({ name: '' })
+    message: messages.errorNoField({
+      name: undefined,
+      operator: '<',
+      value: '2'
+    })
   });
   t.like(result.errors[2], {
     type: 'field',
@@ -74,7 +78,7 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   });
   t.like(result.errors[3], {
     type: 'field',
-    message: messages.errorMissingField({ name: 'baz' })
+    message: messages.errorUnsupportedField({ name: 'baz' })
   });
 });
 

@@ -48,10 +48,18 @@ export class Parser {
         parsimmon
           .alt(
             parsimmon.seq(l.identifier, l.operator, l.value),
-            parsimmon.seq(l.identifier, l.operator, parsimmon.of('')),
-            parsimmon.seq(parsimmon.of(''), l.operator, l.value),
-            parsimmon.seq(parsimmon.of(''), parsimmon.of(''), l.value),
-            parsimmon.seq(parsimmon.of(''), l.operator, parsimmon.of(''))
+            parsimmon.seq(l.identifier, l.operator, parsimmon.of(undefined)),
+            parsimmon.seq(parsimmon.of(undefined), l.operator, l.value),
+            parsimmon.seq(
+              parsimmon.of(undefined),
+              parsimmon.of(undefined),
+              l.value
+            ),
+            parsimmon.seq(
+              parsimmon.of(undefined),
+              l.operator,
+              parsimmon.of(undefined)
+            )
           )
           .map(([field, operator, value]) => ({
             field,
@@ -61,7 +69,7 @@ export class Parser {
           .thru(node('Term')),
       nil: () =>
         parsimmon.optWhitespace
-          .result({ field: '', operator: '', value: '' })
+          .result({ field: undefined, operator: undefined, value: undefined })
           .thru(node('Term')),
       parenthetical: (l) =>
         l.expression

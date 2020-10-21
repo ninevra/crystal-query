@@ -62,9 +62,14 @@
     "prettier": true,
     "space": true,
     "rules": {
-      "import/extensions": ["error", "always"],
+      "import/extensions": [
+        "error",
+        "always"
+      ],
       "ava/no-ignored-test-files": "off",
-      "unicorn/filename-case": "warn"
+      "unicorn/filename-case": "warn",
+      "no-eq-null": "off",
+      "eqeqeq": ["error", "always", {"null": "ignore"}]
     }
   }
 }

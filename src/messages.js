@@ -66,12 +66,24 @@ export function fieldLessThan(args) {
   return fieldSimple({ ...args, relation: 'less than' });
 }
 
-export function errorMissingField({ name }) {
+export function errorNoField({ operator, value }) {
+  return `term '${operator ?? ''}${value ?? ''}' is missing a field name`;
+}
+
+export function errorUnsupportedField({ name }) {
   return `unknown field "${name}"`;
 }
 
-export function errorMissingOperator({ name, operator }) {
-  return `can't use "${operator}" on field "${name}"`;
+export function errorNoOperator({ name, value }) {
+  return `term '${name ?? ''}${value ?? ''}' is missing an operator`;
+}
+
+export function errorUnsupportedOperator({ name, operator }) {
+  return `can't use "${operator}" on field "${name ?? ''}"`;
+}
+
+export function errorNoValue({ name, operator }) {
+  return `term '${name ?? ''}${operator ?? ''}' is missing a value`;
 }
 
 export function errorWrongType({ type, value }) {

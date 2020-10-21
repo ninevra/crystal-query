@@ -4,11 +4,20 @@ export class GenericTermHandler {
   get(name, operator, value) {
     return {
       status: true,
-      describe: (negated) => fieldGeneric({ name, operator, value, negated }),
+      allowAbsentValue: true,
+      describe: (negated) =>
+        fieldGeneric({
+          name: name ?? '',
+          operator: operator ?? '',
+          value: value ?? '',
+          negated
+        }),
       predicate: (input) => {
-        if (name !== '') input = input?.[name];
+        input = input?.[name];
+        value = value ?? '';
         switch (operator) {
-          case '':
+          case null:
+          case undefined:
           case ':':
             return input?.includes?.(value) ?? false;
           case '>':
