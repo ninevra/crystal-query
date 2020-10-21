@@ -18,14 +18,14 @@ export class FieldTermHandler {
     if (!this.fields[name]) {
       return {
         status: false,
-        error: this.errorDesciptors.missingField({ name })
+        error: this.errorDesciptors.missingField({ name, operator, value })
       };
     }
 
     if (!this.fields[name][operator]) {
       return {
         status: false,
-        error: this.errorDesciptors.missingOperator({ name, operator })
+        error: this.errorDesciptors.missingOperator({ name, operator, value })
       };
     }
 
