@@ -38,7 +38,7 @@
     "@babel/cli": "^7.10.4",
     "@babel/core": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
-    "ava": "^3.9.0",
+    "ava": "^3.14.0",
     "c8": "^7.2.0",
     "onchange": "^7.0.2",
     "prettier": "^2.0.5",
@@ -48,9 +48,6 @@
     "files": [
       "lib/**/*.test.*"
     ],
-    "nonSemVerExperiments": {
-      "likeAssertion": true
-    },
     "snapshotDir": "snapshots"
   },
   "prettier": {
