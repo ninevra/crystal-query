@@ -55,46 +55,10 @@ test('language.quoted unescapes other escape sequences', (t) => {
 
 test('language.term recognizes terms', (t) => {
   const term = new Parser().language.term;
-  t.deepEqual(term.parse('foo'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: 'foo',
-      start: { offset: 0, line: 1, column: 1 },
-      end: { offset: 3, line: 1, column: 4 }
-    }
-  });
-  t.deepEqual(term.parse('foo:bar'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: 'foo',
-      operator: ':',
-      value: 'bar',
-      start: { offset: 0, line: 1, column: 1 },
-      end: { offset: 7, line: 1, column: 8 }
-    }
-  });
-  t.like(term.parse('>2'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: undefined,
-      operator: '>',
-      value: '2'
-    }
-  });
-  t.like(term.parse('foo:"bar"'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: 'foo',
-      operator: ':',
-      value: 'bar'
-    }
-  });
+
+  for (const input of ['foo', 'foo:bar', '>2', 'foo:"bar"']) {
+    t.snapshot(term.parse(input), `\`${input}\` as \`term\``);
+  }
 });
 
 test('language.term does not recognize keywords as lone values or field names', (t) => {
@@ -105,45 +69,10 @@ test('language.term does not recognize keywords as lone values or field names', 
 
 test('language.negation recognizes negations', (t) => {
   const negation = new Parser().language.negation;
-  t.like(negation.parse('not foo'), {
-    status: true,
-    value: {
-      name: 'Not',
-      child: {
-        name: 'Term',
-        field: undefined,
-        operator: undefined,
-        value: 'foo'
-      }
-    }
-  });
-  t.like(negation.parse('not not foo'), {
-    status: true,
-    value: {
-      name: 'Not',
-      child: {
-        name: 'Not',
-        child: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'foo'
-        }
-      }
-    }
-  });
-  t.like(negation.parse('not"foo"'), {
-    status: true,
-    value: {
-      name: 'Not',
-      child: {
-        name: 'Term',
-        field: undefined,
-        operator: undefined,
-        value: 'foo'
-      }
-    }
-  });
+
+  for (const input of ['not foo', 'not not foo', 'not"foo"']) {
+    t.snapshot(negation.parse(input), `\`${input}\` as \`negation\``);
+  }
 });
 
 test('language.negation recognizes "nota" as a term, not a negation', (t) => {
@@ -160,166 +89,50 @@ test('language.negation recognizes "nota" as a term, not a negation', (t) => {
 });
 
 test('language.conjunction recognizes terms, negations, and conjunctions', (t) => {
-  const conjunction = new Parser().language.conjunction;
-  t.like(conjunction.parse('foo:"bar"'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: 'foo',
-      operator: ':',
-      value: 'bar'
-    }
-  });
-  t.like(conjunction.parse('not foo'), {
-    status: true,
-    value: {
-      name: 'Not',
-      child: {
-        name: 'Term',
-        field: undefined,
-        operator: undefined,
-        value: 'foo'
-      }
-    }
-  });
-  const result = conjunction.parse('not foo and not bar');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'And',
-      left: {
-        name: 'Not',
-        child: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'foo'
-        }
-      },
-      right: {
-        name: 'Not',
-        child: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'bar'
-        }
-      }
-    }
-  });
+  const { conjunction } = new Parser().language;
+
+  for (const input of ['foo:"bar"', 'not foo', 'not foo and not bar']) {
+    t.snapshot(conjunction.parse(input), `\`${input}\` as \`conjunction\``);
+  }
 });
 
 test('language.conjunction recognizes lists of terms', (t) => {
   const { conjunction } = new Parser().language;
-  const result = conjunction.parse('a b');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'And',
-      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
-      right: { name: 'Term', field: undefined, operator: undefined, value: 'b' }
-    }
-  });
+  t.snapshot(conjunction.parse('a b'), `'a b' as conjunction`);
 });
 
 test('language.conjunction lists have higher precedence than "or"', (t) => {
   const { disjunction } = new Parser().language;
-  const result = disjunction.parse('a or b c');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'Or',
-      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
-      right: {
-        name: 'And',
-        left: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'b'
-        },
-        right: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'c'
-        }
-      }
-    }
-  });
+  t.snapshot(disjunction.parse('a or b c'), `'a or b c' as disjunction`);
 });
 
 test('language.disjunction recognizes terms, disjunctions', (t) => {
-  const disjunction = new Parser().language.disjunction;
-  t.like(disjunction.parse('foo:"bar"'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: 'foo',
-      operator: ':',
-      value: 'bar'
-    }
-  });
-  const result = disjunction.parse('a or b');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'Or',
-      left: { name: 'Term', field: undefined, operator: undefined, value: 'a' },
-      right: { name: 'Term', field: undefined, operator: undefined, value: 'b' }
-    }
-  });
+  const { disjunction } = new Parser().language;
+
+  for (const input of ['foo:"bar"', 'a or b']) {
+    t.snapshot(disjunction.parse(input), `'${input}' as disjunction`);
+  }
 });
 
 test('language.disjunction places "and" at higher precedence than "or"', (t) => {
   const disjunction = new Parser().language.disjunction;
-  const result = disjunction.parse('not a or b and c');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'Or',
-      left: {
-        name: 'Not',
-        child: {
-          name: 'Term',
-          field: undefined,
-          operator: undefined,
-          value: 'a'
-        }
-      },
-      right: { name: 'And' }
-    }
-  });
+  t.snapshot(
+    disjunction.parse('not a or b and c'),
+    `'not a or b and c' as disjunction`
+  );
 });
 
 test('language.parenthetical recognizes parenthetical expressions', (t) => {
   const { parenthetical } = new Parser().language;
-  const result = parenthetical.parse('(a b)');
-  t.like(result, {
-    status: true,
-    value: { name: 'Parenthetical', expression: { name: 'And' } }
-  });
+  t.snapshot(parenthetical.parse('(a b)'), `'(a b)' as parenthetical`);
 });
 
 test('language.parenthetical has higher precedence than "and"', (t) => {
   const { conjunction } = new Parser().language;
-  const result = conjunction.parse('(a or b) and c');
-  t.like(result, {
-    status: true,
-    value: {
-      name: 'And',
-      left: {
-        name: 'Parenthetical',
-        expression: { name: 'Or' }
-      },
-      right: {
-        name: 'Term',
-        field: undefined,
-        operator: undefined,
-        value: 'c'
-      }
-    }
-  });
+  t.snapshot(
+    conjunction.parse('(a or b) and c'),
+    `'(a or b) and c' as conjunction`
+  );
 });
 
 test('empty expressions', (t) => {
@@ -339,116 +152,33 @@ test('empty expressions', (t) => {
 
 test("strange/invalid terms don't cause fatal errors", (t) => {
   const { term, expression } = new Parser().language;
-  t.like(term.parse('>'), {
-    status: true,
-    value: { name: 'Term', field: undefined, operator: '>', value: undefined }
-  });
-  t.like(expression.parse('foo>>bar').value, {
-    name: 'And',
-    left: { name: 'Term', field: 'foo', operator: '>', value: undefined },
-    right: { name: 'Term', field: undefined, operator: '>', value: 'bar' }
-  });
-  t.like(expression.parse('foo: bar').value, {
-    name: 'And',
-    left: { name: 'Term', field: 'foo', operator: ':', value: undefined },
-    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
-  });
-  t.like(expression.parse('::bar').value, {
-    name: 'And',
-    left: { name: 'Term', field: undefined, operator: ':', value: undefined },
-    right: { name: 'Term', field: undefined, operator: ':', value: 'bar' }
-  });
+
+  t.snapshot(term.parse('>'), `'>' as term`);
+
+  for (const input of ['foo>>bar', 'foo: bar', '::bar']) {
+    t.snapshot(expression.parse(input), `'${input}' as expression`);
+  }
 });
 
 test("malformed conjunctions don't cause fatal errors", (t) => {
   const { conjunction } = new Parser().language;
-  t.like(conjunction.parse('and').value, {
-    name: 'And',
-    left: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    },
-    right: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    }
-  });
-  t.like(conjunction.parse('foo and ').value, {
-    name: 'And',
-    left: { name: 'Term', field: undefined, operator: undefined, value: 'foo' },
-    right: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    }
-  });
-  t.like(conjunction.parse('and bar').value, {
-    name: 'And',
-    left: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    },
-    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
-  });
+
+  for (const input of ['and', 'foo and ', 'and bar']) {
+    t.snapshot(conjunction.parse(input), `'${input}' as conjunction`);
+  }
 });
 
 test("malformed disjunctions don't cause fatal errors", (t) => {
   const { disjunction } = new Parser().language;
-  t.like(disjunction.parse('or').value, {
-    name: 'Or',
-    left: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    },
-    right: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    }
-  });
-  t.like(disjunction.parse('foo or').value, {
-    name: 'Or',
-    left: { name: 'Term', field: undefined, operator: undefined, value: 'foo' },
-    right: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    }
-  });
-  t.like(disjunction.parse('or bar').value, {
-    name: 'Or',
-    left: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    },
-    right: { name: 'Term', field: undefined, operator: undefined, value: 'bar' }
-  });
+
+  for (const input of ['or', 'foo or', 'or bar']) {
+    t.snapshot(disjunction.parse(input), `'${input}' as disjunction`);
+  }
 });
 
 test("malformed negations don't cause fatal errors", (t) => {
   const { negation } = new Parser().language;
-  t.like(negation.parse('not').value, {
-    name: 'Not',
-    child: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: undefined
-    }
-  });
+  t.snapshot(negation.parse('not'), `'not' as negation`);
 });
 
 test("surrounding whitespace doesn't break parsers", (t) => {
