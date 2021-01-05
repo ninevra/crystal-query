@@ -47,16 +47,6 @@ export class Schema {
     this.operations = operations;
   }
 
-  query(query) {
-    const parsed = this.parse(query);
-    if (parsed.status) {
-      parsed.description = parsed.ast.describe();
-      parsed.predicate = parsed.ast.predicate;
-    }
-
-    return parsed;
-  }
-
   parse(query) {
     let { status, value: ast, index, expected } = this.parser.parse(query);
     let errors;
@@ -80,11 +70,15 @@ export class Schema {
       errors = [{ type: 'syntax', index, expected, subtype }];
     }
 
-    return { status, errors, ast };
-  }
+    const operations = {};
 
-  describe(query) {
-    return this.parse(query).ast.describe();
+    if (ast) {
+      for (const operation of Object.keys(this.operations)) {
+        operations[operation] = ast[operation];
+      }
+    }
+
+    return { ...operations, status, errors, ast };
   }
 
   attachOperations(astNode) {
@@ -135,9 +129,5 @@ export class Schema {
       default:
         throw new InvalidNodeError(astNode);
     }
-  }
-
-  evaluate(query) {
-    return this.parse(query).ast.predicate;
   }
 }

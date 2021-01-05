@@ -6,15 +6,15 @@ import { FieldTermHandler } from './terms/FieldTermHandler.js';
 import * as messages from './messages.js';
 import test from 'ava';
 
-test('describe() renders query descriptions', (t) => {
+test('parse().describe() renders query descriptions', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const description = new Schema().describe(query);
+  const description = new Schema().parse(query).describe();
   t.snapshot(description);
 });
 
-test('evaluate() returns a function', (t) => {
+test('parse().predicate is a function', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const predicate = new Schema().evaluate(query);
+  const predicate = new Schema().parse(query).predicate;
   t.is(typeof predicate, 'function');
 });
 
@@ -82,23 +82,23 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   });
 });
 
-test('query() returns all applicable of ast, description, evaluator, errors', (t) => {
+test('parse() returns all applicable of ast, operations, errors', (t) => {
   const schema = new Schema();
   let query = 'not (a or b:"c d") and e>3';
-  let result = schema.query(query);
+  let result = schema.parse(query);
   t.like(result, {
     status: true,
     ast: new Parser().parse(query).value,
-    description: 'not ("a" or b:"c d") and e>"3"',
     errors: []
   });
+  t.snapshot(result.describe());
   t.true(result.predicate({ e: 4, b: Number.NaN }));
   t.false(result.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';
-  result = schema.query(query);
+  result = schema.parse(query);
   assertSyntaxError(t, result, 'unclosed quotation');
   t.is(result.ast, undefined);
-  t.is(result.description, undefined);
+  t.is(result.describe, undefined);
   t.is(result.predicate, undefined);
 });
