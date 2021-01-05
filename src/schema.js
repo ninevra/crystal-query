@@ -87,10 +87,6 @@ export class Schema {
     return this.parse(query).ast.describe();
   }
 
-  operate(astNode, operation, args) {
-    return this.operations[operation][astNode.name](astNode, ...args);
-  }
-
   attachOperations(astNode) {
     for (const operation of Object.keys(this.operations)) {
       if (astNode.name === 'Term') {
@@ -100,7 +96,7 @@ export class Schema {
         ];
       } else {
         astNode[operation] = (...args) =>
-          this.operate(astNode, operation, args);
+          this.operations[operation][astNode.name](astNode, ...args);
       }
     }
   }
