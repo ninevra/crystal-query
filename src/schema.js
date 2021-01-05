@@ -71,15 +71,17 @@ export class Schema {
       errors = [{ type: 'syntax', index, expected, subtype }];
     }
 
-    const ops = {};
-
     if (ast) {
+      const ops = {};
+
       for (const operation of Object.keys(this.ops)) {
         ops[operation] = ast.ops[operation];
       }
+
+      return { ops, status, errors, ast };
     }
 
-    return { ops, status, errors, ast };
+    return { status, errors };
   }
 
   attachOps(astNode) {
