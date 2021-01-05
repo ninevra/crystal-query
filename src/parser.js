@@ -83,8 +83,8 @@ export class Parser {
         parsimmon.alt(
           l.not
             .then(parsimmon.optWhitespace.then(l.negation).or(l.nil))
-            .map((child) => ({
-              child
+            .map((expression) => ({
+              expression
             }))
             .thru(node('Not')),
           l.basic

@@ -28,7 +28,7 @@ export class Schema {
             expression: expression.describe(),
             negated
           }),
-        Not: ({ child }, negated) => child.describe(!negated),
+        Not: ({ expression }, negated) => expression.describe(!negated),
         Nil: () => ''
       },
       predicate: {
@@ -37,7 +37,7 @@ export class Schema {
         Or: ({ left, right }, input) =>
           left.predicate(input) || right.predicate(input),
         Parenthetical: ({ expression }, input) => expression.predicate(input),
-        Not: ({ child }, input) => !child.predicate(input),
+        Not: ({ expression }, input) => !expression.predicate(input),
         Nil: () => false
       }
     }
@@ -116,7 +116,7 @@ export class Schema {
           ...this.validateNode(astNode.right)
         ];
       case 'Not':
-        return this.validateNode(astNode.child);
+        return this.validateNode(astNode.expression);
       case 'Parenthetical':
         return this.validateNode(astNode.expression);
       case 'Nil':

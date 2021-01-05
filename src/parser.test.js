@@ -146,7 +146,7 @@ test('empty expressions', (t) => {
   result = expression.parse('not ()');
   t.like(result, {
     status: true,
-    value: { name: 'Not', child: { name: 'Parenthetical' } }
+    value: { name: 'Not', expression: { name: 'Parenthetical' } }
   });
 });
 
