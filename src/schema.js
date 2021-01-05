@@ -11,23 +11,47 @@ export class InvalidNodeError extends Error {
 export class Schema {
   constructor({
     termHandler = new GenericTermHandler(),
-    descriptors: {
-      conjunction = ({ left, right }) => messages.conjunction({ left, right }),
-      disjunction = ({ left, right }) => messages.disjunction({ left, right }),
-      parenthetical = ({ expression, negated }) =>
-        messages.parenthetical({ expression, negated })
-    } = {}
+    operations = {
+      describe: {
+        And: ({ left, right }) =>
+          messages.conjunction({
+            left: left.describe(),
+            right: right.describe()
+          }),
+        Or: ({ left, right }) =>
+          messages.disjunction({
+            left: left.describe(),
+            right: right.describe()
+          }),
+        Parenthetical: ({ expression }, negated) =>
+          messages.parenthetical({
+            expression: expression.describe(),
+            negated
+          }),
+        Not: ({ child }, negated) => child.describe(!negated),
+        Nil: () => ''
+      },
+      predicate: {
+        And: ({ left, right }, input) =>
+          left.predicate(input) && right.predicate(input),
+        Or: ({ left, right }, input) =>
+          left.predicate(input) || right.predicate(input),
+        Parenthetical: ({ expression }, input) => expression.predicate(input),
+        Not: ({ child }, input) => !child.predicate(input),
+        Nil: () => false
+      }
+    }
   } = {}) {
     this.parser = new Parser();
     this.termHandler = termHandler;
-    this.descriptors = { conjunction, disjunction, parenthetical };
+    this.operations = operations;
   }
 
   query(query) {
     const parsed = this.parse(query);
     if (parsed.status) {
-      parsed.description = this.describeNode(parsed.ast);
-      parsed.predicate = this.evaluateNode(parsed.ast);
+      parsed.description = parsed.ast.describe();
+      parsed.predicate = parsed.ast.predicate;
     }
 
     return parsed;
@@ -60,41 +84,30 @@ export class Schema {
   }
 
   describe(query) {
-    return this.describeNode(this.parser.parse(query).value);
+    return this.parse(query).ast.describe();
   }
 
-  describeNode(astNode, negated = false) {
-    switch (astNode.name) {
-      case 'And':
-        return this.descriptors.conjunction({
-          left: this.describeNode(astNode.left),
-          right: this.describeNode(astNode.right)
-        });
-      case 'Or':
-        return this.descriptors.disjunction({
-          left: this.describeNode(astNode.left),
-          right: this.describeNode(astNode.right)
-        });
-      case 'Not':
-        return this.describeNode(astNode.child, !negated);
-      case 'Nil':
-        return '';
-      case 'Parenthetical':
-        return this.descriptors.parenthetical({
-          expression: this.describeNode(astNode.expression),
-          negated
-        });
-      case 'Term': {
-        const { field, operator, value } = astNode;
-        return this.termHandler.get(field, operator, value).describe(negated);
-      }
+  operate(astNode, operation, args) {
+    return this.operations[operation][astNode.name](astNode, ...args);
+  }
 
-      default:
-        throw new InvalidNodeError(astNode);
+  attachOperations(astNode) {
+    for (const operation of Object.keys(this.operations)) {
+      if (astNode.name === 'Term') {
+        const { field, operator, value } = astNode;
+        astNode[operation] = this.termHandler.get(field, operator, value)[
+          operation
+        ];
+      } else {
+        astNode[operation] = (...args) =>
+          this.operate(astNode, operation, args);
+      }
     }
   }
 
   validateNode(astNode) {
+    this.attachOperations(astNode);
+
     switch (astNode.name) {
       case 'And':
       case 'Or':
@@ -129,44 +142,6 @@ export class Schema {
   }
 
   evaluate(query) {
-    const { status, value: ast } = this.parser.parse(query);
-    if (!status) throw new Error(`parse failed for "${query}"`);
-    return this.evaluateNode(ast);
-  }
-
-  evaluateNode(astNode) {
-    switch (astNode.name) {
-      case 'And': {
-        const left = this.evaluateNode(astNode.left);
-        const right = this.evaluateNode(astNode.right);
-        return (input) => left(input) && right(input);
-      }
-
-      case 'Or': {
-        const left = this.evaluateNode(astNode.left);
-        const right = this.evaluateNode(astNode.right);
-        return (input) => left(input) || right(input);
-      }
-
-      case 'Not': {
-        const child = this.evaluateNode(astNode.child);
-        return (input) => !child(input);
-      }
-
-      case 'Term': {
-        const { field, operator, value } = astNode;
-        return this.termHandler.get(field, operator, value).predicate;
-      }
-
-      case 'Nil':
-        return () => false;
-      case 'Parenthetical': {
-        const child = this.evaluateNode(astNode.expression);
-        return (input) => child(input);
-      }
-
-      default:
-        throw new InvalidNodeError(astNode);
-    }
+    return this.parse(query).ast.predicate;
   }
 }
