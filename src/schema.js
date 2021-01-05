@@ -11,40 +11,41 @@ export class InvalidNodeError extends Error {
 export class Schema {
   constructor({
     termHandler = new GenericTermHandler(),
-    operations = {
+    ops = {
       describe: {
         And: ({ left, right }) =>
           messages.conjunction({
-            left: left.describe(),
-            right: right.describe()
+            left: left.ops.describe(),
+            right: right.ops.describe()
           }),
         Or: ({ left, right }) =>
           messages.disjunction({
-            left: left.describe(),
-            right: right.describe()
+            left: left.ops.describe(),
+            right: right.ops.describe()
           }),
         Parenthetical: ({ expression }, negated) =>
           messages.parenthetical({
-            expression: expression.describe(),
+            expression: expression.ops.describe(),
             negated
           }),
-        Not: ({ expression }, negated) => expression.describe(!negated),
+        Not: ({ expression }, negated) => expression.ops.describe(!negated),
         Nil: () => ''
       },
       predicate: {
         And: ({ left, right }, input) =>
-          left.predicate(input) && right.predicate(input),
+          left.ops.predicate(input) && right.ops.predicate(input),
         Or: ({ left, right }, input) =>
-          left.predicate(input) || right.predicate(input),
-        Parenthetical: ({ expression }, input) => expression.predicate(input),
-        Not: ({ expression }, input) => !expression.predicate(input),
+          left.ops.predicate(input) || right.ops.predicate(input),
+        Parenthetical: ({ expression }, input) =>
+          expression.ops.predicate(input),
+        Not: ({ expression }, input) => !expression.ops.predicate(input),
         Nil: () => false
       }
     }
   } = {}) {
     this.parser = new Parser();
     this.termHandler = termHandler;
-    this.operations = operations;
+    this.ops = ops;
   }
 
   parse(query) {
@@ -70,33 +71,35 @@ export class Schema {
       errors = [{ type: 'syntax', index, expected, subtype }];
     }
 
-    const operations = {};
+    const ops = {};
 
     if (ast) {
-      for (const operation of Object.keys(this.operations)) {
-        operations[operation] = ast[operation];
+      for (const operation of Object.keys(this.ops)) {
+        ops[operation] = ast.ops[operation];
       }
     }
 
-    return { ...operations, status, errors, ast };
+    return { ops, status, errors, ast };
   }
 
-  attachOperations(astNode) {
-    for (const operation of Object.keys(this.operations)) {
+  attachOps(astNode) {
+    astNode.ops = astNode.ops ?? {};
+
+    for (const operation of Object.keys(this.ops)) {
       if (astNode.name === 'Term') {
         const { field, operator, value } = astNode;
-        astNode[operation] = this.termHandler.get(field, operator, value)[
+        astNode.ops[operation] = this.termHandler.get(field, operator, value)[
           operation
         ];
       } else {
-        astNode[operation] = (...args) =>
-          this.operations[operation][astNode.name](astNode, ...args);
+        astNode.ops[operation] = (...args) =>
+          this.ops[operation][astNode.name](astNode, ...args);
       }
     }
   }
 
   validateNode(astNode) {
-    this.attachOperations(astNode);
+    this.attachOps(astNode);
 
     switch (astNode.name) {
       case 'And':

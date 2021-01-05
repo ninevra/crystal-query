@@ -6,15 +6,15 @@ import { FieldTermHandler } from './terms/FieldTermHandler.js';
 import * as messages from './messages.js';
 import test from 'ava';
 
-test('parse().describe() renders query descriptions', (t) => {
+test('parse().ops.describe() renders query descriptions', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const description = new Schema().parse(query).describe();
+  const description = new Schema().parse(query).ops.describe();
   t.snapshot(description);
 });
 
-test('parse().predicate is a function', (t) => {
+test('parse().ops.predicate is a function', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const predicate = new Schema().parse(query).predicate;
+  const predicate = new Schema().parse(query).ops.predicate;
   t.is(typeof predicate, 'function');
 });
 
@@ -91,9 +91,9 @@ test('parse() returns all applicable of ast, operations, errors', (t) => {
     ast: new Parser().parse(query).value,
     errors: []
   });
-  t.snapshot(result.describe());
-  t.true(result.predicate({ e: 4, b: Number.NaN }));
-  t.false(result.predicate(['a']));
+  t.snapshot(result.ops.describe());
+  t.true(result.ops.predicate({ e: 4, b: Number.NaN }));
+  t.false(result.ops.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';
   result = schema.parse(query);
