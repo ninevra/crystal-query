@@ -117,8 +117,7 @@ test('Schema() attaches custom operations to ASTs', (t) => {
         And: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
         Or: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
         Not: ({ expression }) => expression.ops.count() + 1,
-        Parenthetical: ({ expression }) => expression.ops.count() + 1,
-        Nil: () => 1
+        Parenthetical: ({ expression }) => expression.ops.count() + 1
       }
     }
   });
@@ -151,8 +150,7 @@ test('Custom operations can carry through arguments', (t) => {
         },
         Not: ({ expression }, ...args) => expression.ops.passthrough(...args),
         Parenthetical: ({ expression }, ...args) =>
-          expression.ops.passthrough(...args),
-        Nil: (...args) => t.deepEqual(args, input)
+          expression.ops.passthrough(...args)
       }
     }
   });

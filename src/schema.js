@@ -28,8 +28,7 @@ export class Schema {
             expression: expression.ops.describe(),
             negated
           }),
-        Not: ({ expression }, negated) => expression.ops.describe(!negated),
-        Nil: () => ''
+        Not: ({ expression }, negated) => expression.ops.describe(!negated)
       },
       predicate: {
         And: ({ left, right }, input) =>
@@ -38,8 +37,7 @@ export class Schema {
           left.ops.predicate(input) || right.ops.predicate(input),
         Parenthetical: ({ expression }, input) =>
           expression.ops.predicate(input),
-        Not: ({ expression }, input) => !expression.ops.predicate(input),
-        Nil: () => false
+        Not: ({ expression }, input) => !expression.ops.predicate(input)
       }
     }
   } = {}) {
@@ -114,8 +112,6 @@ export class Schema {
         return this.validateNode(astNode.expression);
       case 'Parenthetical':
         return this.validateNode(astNode.expression);
-      case 'Nil':
-        return [];
       case 'Term': {
         const { field, operator, value: termValue } = astNode;
         const { status, error } = this.termHandler.get(
