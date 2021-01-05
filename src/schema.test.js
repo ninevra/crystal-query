@@ -102,3 +102,60 @@ test('parse() returns all applicable of ast, operations, errors', (t) => {
   t.is(result.describe, undefined);
   t.is(result.predicate, undefined);
 });
+
+test('Schema() attaches custom operations to ASTs', (t) => {
+  const schema = new Schema({
+    termHandler: {
+      get() {
+        return {
+          count: () => 1
+        };
+      }
+    },
+    ops: {
+      count: {
+        And: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
+        Or: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
+        Not: ({ expression }) => expression.ops.count() + 1,
+        Parenthetical: ({ expression }) => expression.ops.count() + 1,
+        Nil: () => 1
+      }
+    }
+  });
+
+  t.snapshot(schema.parse('not (a or b:"c d") and e>3').ops.count());
+});
+
+test('Custom operations can carry through arguments', (t) => {
+  t.plan(3);
+
+  const input = [1, 'foo', Symbol('bar')];
+
+  const schema = new Schema({
+    termHandler: {
+      get() {
+        return {
+          passthrough: (...args) => t.deepEqual(args, input)
+        };
+      }
+    },
+    ops: {
+      passthrough: {
+        And: ({ left, right }, ...args) => {
+          left.ops.passthrough(...args);
+          right.ops.passthrough(...args);
+        },
+        Or: ({ left, right }, ...args) => {
+          left.ops.passthrough(...args);
+          right.ops.passthrough(...args);
+        },
+        Not: ({ expression }, ...args) => expression.ops.passthrough(...args),
+        Parenthetical: ({ expression }, ...args) =>
+          expression.ops.passthrough(...args),
+        Nil: (...args) => t.deepEqual(args, input)
+      }
+    }
+  });
+
+  schema.parse('not (a or b:"c d") and e>3').ops.passthrough(...input);
+});
