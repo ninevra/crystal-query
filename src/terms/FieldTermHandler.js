@@ -31,7 +31,7 @@ export class FieldTermHandler {
     };
   }
 
-  get(name, operator, value) {
+  get({ field: name, operator, value }) {
     if (name == null && this.defaultField == null) {
       return {
         status: false,

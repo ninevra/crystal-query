@@ -87,10 +87,7 @@ export class Schema {
 
     for (const operation of Object.keys(this.ops)) {
       if (astNode.name === 'Term') {
-        const { field, operator, value } = astNode;
-        astNode.ops[operation] = this.termHandler.get(field, operator, value)[
-          operation
-        ];
+        astNode.ops[operation] = this.termHandler.get(astNode)[operation];
       } else {
         astNode.ops[operation] = this.ops[operation][astNode.name](astNode);
       }
@@ -112,12 +109,7 @@ export class Schema {
       case 'Parenthetical':
         return this.validateNode(astNode.expression);
       case 'Term': {
-        const { field, operator, value: termValue } = astNode;
-        const { status, error } = this.termHandler.get(
-          field,
-          operator,
-          termValue
-        );
+        const { status, error } = this.termHandler.get(astNode);
         if (status) {
           return [];
         }

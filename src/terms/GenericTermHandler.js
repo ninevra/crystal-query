@@ -1,7 +1,7 @@
 import { fieldGeneric } from '../messages.js';
 
 export class GenericTermHandler {
-  get(name, operator, value) {
+  get({ field: name, operator, value }) {
     return {
       status: true,
       allowAbsentValue: true,
