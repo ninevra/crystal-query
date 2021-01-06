@@ -82,13 +82,23 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   });
 });
 
+function dagToTree(dag) {
+  if (dag?.constructor?.name === 'Object') {
+    return Object.fromEntries(
+      Object.entries(dag).map(([key, value]) => [key, dagToTree(value)])
+    );
+  }
+
+  return dag;
+}
+
 test('parse() returns all applicable of ast, operations, errors', (t) => {
   const schema = new Schema();
   let query = 'not (a or b:"c d") and e>3';
   let result = schema.parse(query);
   t.like(result, {
     status: true,
-    ast: new Parser().parse(query).value,
+    ast: dagToTree(new Parser().parse(query).value),
     errors: []
   });
   t.snapshot(result.ops.describe());
