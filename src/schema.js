@@ -13,31 +13,31 @@ export class Schema {
     termHandler = new GenericTermHandler(),
     ops = {
       describe: {
-        And: ({ left, right }) =>
+        And: ({ left, right }) => () =>
           messages.conjunction({
             left: left.ops.describe(),
             right: right.ops.describe()
           }),
-        Or: ({ left, right }) =>
+        Or: ({ left, right }) => () =>
           messages.disjunction({
             left: left.ops.describe(),
             right: right.ops.describe()
           }),
-        Parenthetical: ({ expression }, negated) =>
+        Parenthetical: ({ expression }) => (negated) =>
           messages.parenthetical({
             expression: expression.ops.describe(),
             negated
           }),
-        Not: ({ expression }, negated) => expression.ops.describe(!negated)
+        Not: ({ expression }) => (negated) => expression.ops.describe(!negated)
       },
       predicate: {
-        And: ({ left, right }, input) =>
+        And: ({ left, right }) => (input) =>
           left.ops.predicate(input) && right.ops.predicate(input),
-        Or: ({ left, right }, input) =>
+        Or: ({ left, right }) => (input) =>
           left.ops.predicate(input) || right.ops.predicate(input),
-        Parenthetical: ({ expression }, input) =>
+        Parenthetical: ({ expression }) => (input) =>
           expression.ops.predicate(input),
-        Not: ({ expression }, input) => !expression.ops.predicate(input)
+        Not: ({ expression }) => (input) => !expression.ops.predicate(input)
       }
     }
   } = {}) {
@@ -92,8 +92,7 @@ export class Schema {
           operation
         ];
       } else {
-        astNode.ops[operation] = (...args) =>
-          this.ops[operation][astNode.name](astNode, ...args);
+        astNode.ops[operation] = this.ops[operation][astNode.name](astNode);
       }
     }
   }

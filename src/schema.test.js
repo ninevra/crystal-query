@@ -124,10 +124,11 @@ test('Schema() attaches custom operations to ASTs', (t) => {
     },
     ops: {
       count: {
-        And: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
-        Or: ({ left, right }) => left.ops.count() + right.ops.count() + 1,
-        Not: ({ expression }) => expression.ops.count() + 1,
-        Parenthetical: ({ expression }) => expression.ops.count() + 1
+        And: ({ left, right }) => () =>
+          left.ops.count() + right.ops.count() + 1,
+        Or: ({ left, right }) => () => left.ops.count() + right.ops.count() + 1,
+        Not: ({ expression }) => () => expression.ops.count() + 1,
+        Parenthetical: ({ expression }) => () => expression.ops.count() + 1
       }
     }
   });
@@ -150,16 +151,17 @@ test('Custom operations can carry through arguments', (t) => {
     },
     ops: {
       passthrough: {
-        And: ({ left, right }, ...args) => {
+        And: ({ left, right }) => (...args) => {
           left.ops.passthrough(...args);
           right.ops.passthrough(...args);
         },
-        Or: ({ left, right }, ...args) => {
+        Or: ({ left, right }) => (...args) => {
           left.ops.passthrough(...args);
           right.ops.passthrough(...args);
         },
-        Not: ({ expression }, ...args) => expression.ops.passthrough(...args),
-        Parenthetical: ({ expression }, ...args) =>
+        Not: ({ expression }) => (...args) =>
+          expression.ops.passthrough(...args),
+        Parenthetical: ({ expression }) => (...args) =>
           expression.ops.passthrough(...args)
       }
     }
