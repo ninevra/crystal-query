@@ -169,3 +169,41 @@ test('Custom operations can carry through arguments', (t) => {
 
   schema.parse('not (a or b:"c d") and e>3').ops.passthrough(...input);
 });
+
+test('child nodes get their ops before their parents', (t) => {
+  t.plan(6);
+
+  const schema = new Schema({
+    termHandler: {
+      get() {
+        return {
+          check: () => true
+        };
+      }
+    },
+    ops: {
+      check: {
+        And: ({ left, right }) => {
+          t.true(left.ops.check());
+          t.true(right.ops.check());
+          return () => true;
+        },
+        Or: ({ left, right }) => {
+          t.true(left.ops.check());
+          t.true(right.ops.check());
+          return () => true;
+        },
+        Not: ({ expression }) => {
+          t.true(expression.ops.check());
+          return () => true;
+        },
+        Parenthetical: ({ expression }) => {
+          t.true(expression.ops.check());
+          return () => true;
+        }
+      }
+    }
+  });
+
+  schema.parse('not (a or b:"c d") and e>3');
+});

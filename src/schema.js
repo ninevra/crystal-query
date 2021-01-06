@@ -50,6 +50,7 @@ export class Schema {
     let { status, value: ast, index, expected } = this.parser.parse(query);
     let errors;
     if (status) {
+      this.attachOps(ast);
       errors = this.validateNode(ast);
       status = errors.length === 0;
     } else {
@@ -83,7 +84,14 @@ export class Schema {
   }
 
   attachOps(astNode) {
-    astNode.ops = astNode.ops ?? {};
+    if (astNode.name === 'And' || astNode.name === 'Or') {
+      this.attachOps(astNode.left);
+      this.attachOps(astNode.right);
+    } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
+      this.attachOps(astNode.expression);
+    }
+
+    astNode.ops = {};
 
     for (const operation of Object.keys(this.ops)) {
       if (astNode.name === 'Term') {
@@ -95,8 +103,6 @@ export class Schema {
   }
 
   validateNode(astNode) {
-    this.attachOps(astNode);
-
     switch (astNode.name) {
       case 'And':
       case 'Or':
