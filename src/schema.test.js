@@ -118,6 +118,7 @@ test('Schema() attaches custom operations to ASTs', (t) => {
     termHandler: {
       get() {
         return {
+          status: true,
           count: () => 1
         };
       }
@@ -145,6 +146,7 @@ test('Custom operations can carry through arguments', (t) => {
     termHandler: {
       get() {
         return {
+          status: true,
           passthrough: (...args) => t.deepEqual(args, input)
         };
       }
@@ -177,6 +179,7 @@ test('child nodes get their ops before their parents', (t) => {
     termHandler: {
       get() {
         return {
+          status: true,
           check: () => true
         };
       }
@@ -206,4 +209,22 @@ test('child nodes get their ops before their parents', (t) => {
   });
 
   schema.parse('not (a or b:"c d") and e>3');
+});
+
+test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) => {
+  const schema = new Schema({
+    termHandler: new FieldTermHandler({
+      foo: new StringPropertyField('foo', false, 'foo'),
+      bar: new NumberPropertyField('bar', false, 'bar')
+    }),
+    ignoreInvalid: true
+  });
+
+  t.like(schema.parse('foo'), { status: true, ast: undefined });
+  t.like(schema.parse('(foo)'), { status: true, ast: undefined });
+  t.like(schema.parse('not foo'), { status: true, ast: undefined });
+  t.like(schema.parse('foo and bar'), { status: true, ast: undefined });
+  t.like(schema.parse('foo or bar'), { status: true, ast: undefined });
+
+  t.snapshot(schema.parse('foo:hello and bar=quux not foo>bar'));
 });

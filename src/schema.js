@@ -11,6 +11,7 @@ export class InvalidNodeError extends Error {
 export class Schema {
   constructor({
     termHandler = new GenericTermHandler(),
+    ignoreInvalid = false,
     ops = {
       describe: {
         And: ({ left, right }) => () =>
@@ -43,16 +44,22 @@ export class Schema {
   } = {}) {
     this.parser = new Parser();
     this.termHandler = termHandler;
+    this.ignoreInvalid = ignoreInvalid;
     this.ops = ops;
   }
 
   parse(query) {
     let { status, value: ast, index, expected } = this.parser.parse(query);
     let errors;
+
     if (status) {
       this.attachOps(ast);
-      errors = this.validateNode(ast);
-      status = errors.length === 0;
+      if (this.ignoreInvalid) {
+        [ast, errors] = this.ignoringInvalidNodes(ast);
+      } else {
+        errors = this.validateNode(ast);
+        status = errors.length === 0;
+      }
     } else {
       let subtype = 'unknown';
       const offset = index.offset;
@@ -70,20 +77,71 @@ export class Schema {
       errors = [{ type: 'syntax', index, expected, subtype }];
     }
 
-    if (ast) {
+    if (status && ast) {
       const ops = {};
 
       for (const operation of Object.keys(this.ops)) {
         ops[operation] = ast.ops[operation];
       }
 
-      return { ops, status, errors, ast };
+      return { status, errors, ast, ops };
     }
 
     return { status, errors };
   }
 
+  // Returns a new AST in which invalid terms have been removed, nodes with only
+  // invalid children have been removed, and nodes with one invalid child have
+  // been replaced by their valid child.
+  //
+  // The returned AST may be undefined if nothing remained.
+  //
+  // Returns [AST, errors]
+  ignoringInvalidNodes(astNode) {
+    if (astNode === undefined) {
+      return [undefined, []];
+    }
+
+    if (astNode.name === 'And' || astNode.name === 'Or') {
+      const [left, leftErrors] = this.ignoringInvalidNodes(astNode.left);
+      const [right, rightErrors] = this.ignoringInvalidNodes(astNode.right);
+      const errors = [...leftErrors, ...rightErrors];
+
+      if (left === undefined && right === undefined) {
+        return [undefined, errors];
+      } else if (left === undefined) {
+        return [right, errors];
+      } else if (right === undefined) {
+        return [left, errors];
+      }
+
+      return [{ ...astNode, left, right }, errors];
+    } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
+      const [expression, errors] = this.ignoringInvalidNodes(
+        astNode.expression
+      );
+
+      if (expression === undefined) {
+        return [undefined, errors];
+      }
+
+      return [{ ...astNode, expression }, errors];
+    } else if (astNode.name === 'Term') {
+      const { status, error } = this.termHandler.get(astNode);
+
+      if (status) {
+        return [astNode, []];
+      }
+
+      return [undefined, [error]];
+    }
+  }
+
   attachOps(astNode) {
+    if (astNode === undefined) {
+      return;
+    }
+
     if (astNode.name === 'And' || astNode.name === 'Or') {
       this.attachOps(astNode.left);
       this.attachOps(astNode.right);
@@ -103,6 +161,10 @@ export class Schema {
   }
 
   validateNode(astNode) {
+    if (astNode === undefined) {
+      return [];
+    }
+
     switch (astNode.name) {
       case 'And':
       case 'Or':
