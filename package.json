@@ -65,12 +65,10 @@
       ],
       "ava/no-ignored-test-files": "off",
       "unicorn/filename-case": "warn",
-      "no-eq-null": "off",
-      "eqeqeq": [
+      "no-else-return": [
         "error",
-        "always",
         {
-          "null": "ignore"
+          "allowElseIf": true
         }
       ]
     }

@@ -32,16 +32,16 @@ export class FieldTermHandler {
   }
 
   get({ field: name, operator, value }) {
-    if (name == null && this.defaultField == null) {
+    if (name === undefined && this.defaultField === undefined) {
       return {
         status: false,
         error: this.errorDesciptors.noField({ name, operator, value })
       };
     }
 
-    const field = name == null ? this.defaultField : this.fields[name];
+    const field = name === undefined ? this.defaultField : this.fields[name];
 
-    if (field == null) {
+    if (field === undefined) {
       return {
         status: false,
         error: this.errorDesciptors.unsupportedField({ name, operator, value })
@@ -49,8 +49,8 @@ export class FieldTermHandler {
     }
 
     // TODO this is a crude way of selecting the default operation, but it works
-    if (field[operator ?? 'default'] == null) {
-      if (operator == null) {
+    if (field[operator ?? 'default'] === undefined) {
+      if (operator === undefined) {
         return {
           status: false,
           error: this.errorDesciptors.noOperator({ name, operator, value })
@@ -67,7 +67,7 @@ export class FieldTermHandler {
       };
     }
 
-    if (value == null && !field.allowAbsentValue) {
+    if (value === undefined && !field.allowAbsentValue) {
       return {
         status: false,
         error: this.errorDesciptors.noValue({ name, operator, value })
