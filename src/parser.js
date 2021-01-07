@@ -73,6 +73,7 @@ export class Parser {
           .thru(node('Term')),
       parenthetical: (l) =>
         l.expression
+          .or(l.nil)
           .wrap(l.lparen, l.rparen.desc('closing )'))
           .map((expression) => ({
             expression
@@ -124,9 +125,8 @@ export class Parser {
             .thru(node('Or')),
           l.conjunction
         ),
-      expression: (l) =>
-        parsimmon.alt(l.disjunction.trim(parsimmon.optWhitespace), l.nil),
-      query: (l) => l.expression
+      expression: (l) => l.disjunction.trim(parsimmon.optWhitespace),
+      query: (l) => parsimmon.alt(l.expression, parsimmon.of(undefined))
     });
   }
 

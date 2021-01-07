@@ -135,19 +135,12 @@ test('language.parenthetical has higher precedence than "and"', (t) => {
   );
 });
 
-test('empty expressions', (t) => {
-  // TODO: decide how to handle empty terms; IgnoredTerm, Term <'', '', ''> or
-  // something else?
-  const { expression } = new Parser().language;
-  let result = expression.parse('');
-  t.like(result, { status: true });
-  result = expression.parse('()');
-  t.like(result, { status: true, value: { name: 'Parenthetical' } });
-  result = expression.parse('not ()');
-  t.like(result, {
-    status: true,
-    value: { name: 'Not', expression: { name: 'Parenthetical' } }
-  });
+test('empty expressions and queries', (t) => {
+  const { expression, query } = new Parser().language;
+  t.like(expression.parse(''), { status: false });
+  t.like(query.parse(''), { status: true, value: undefined });
+  t.snapshot(expression.parse('()'));
+  t.snapshot(expression.parse('not ()'));
 });
 
 test("strange/invalid terms don't cause fatal errors", (t) => {
