@@ -6,15 +6,15 @@ import { FieldTermHandler } from './terms/FieldTermHandler.js';
 import * as messages from './messages.js';
 import test from 'ava';
 
-test('parse().ops.describe() renders query descriptions', (t) => {
+test('parse().props.describe() renders query descriptions', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const description = new Schema().parse(query).ops.describe();
+  const description = new Schema().parse(query).props.describe();
   t.snapshot(description);
 });
 
-test('parse().ops.predicate is a function', (t) => {
+test('parse().props.predicate is a function', (t) => {
   const query = 'not (a or b:"c d") and e>3';
-  const predicate = new Schema().parse(query).ops.predicate;
+  const predicate = new Schema().parse(query).props.predicate;
   t.is(typeof predicate, 'function');
 });
 
@@ -101,9 +101,9 @@ test('parse() returns all applicable of ast, operations, errors', (t) => {
     ast: dagToTree(new Parser().parse(query).value),
     errors: []
   });
-  t.snapshot(result.ops.describe());
-  t.true(result.ops.predicate({ e: 4, b: Number.NaN }));
-  t.false(result.ops.predicate(['a']));
+  t.snapshot(result.props.describe());
+  t.true(result.props.predicate({ e: 4, b: Number.NaN }));
+  t.false(result.props.predicate(['a']));
 
   query = 'not (a or b:"c d) and e>3';
   result = schema.parse(query);
@@ -123,18 +123,19 @@ test('Schema() attaches custom operations to ASTs', (t) => {
         };
       }
     },
-    ops: {
+    props: {
       count: {
         And: ({ left, right }) => () =>
-          left.ops.count() + right.ops.count() + 1,
-        Or: ({ left, right }) => () => left.ops.count() + right.ops.count() + 1,
-        Not: ({ expression }) => () => expression.ops.count() + 1,
-        Parenthetical: ({ expression }) => () => expression.ops.count() + 1
+          left.props.count() + right.props.count() + 1,
+        Or: ({ left, right }) => () =>
+          left.props.count() + right.props.count() + 1,
+        Not: ({ expression }) => () => expression.props.count() + 1,
+        Parenthetical: ({ expression }) => () => expression.props.count() + 1
       }
     }
   });
 
-  t.snapshot(schema.parse('not (a or b:"c d") and e>3').ops.count());
+  t.snapshot(schema.parse('not (a or b:"c d") and e>3').props.count());
 });
 
 test('Custom operations can carry through arguments', (t) => {
@@ -151,28 +152,28 @@ test('Custom operations can carry through arguments', (t) => {
         };
       }
     },
-    ops: {
+    props: {
       passthrough: {
         And: ({ left, right }) => (...args) => {
-          left.ops.passthrough(...args);
-          right.ops.passthrough(...args);
+          left.props.passthrough(...args);
+          right.props.passthrough(...args);
         },
         Or: ({ left, right }) => (...args) => {
-          left.ops.passthrough(...args);
-          right.ops.passthrough(...args);
+          left.props.passthrough(...args);
+          right.props.passthrough(...args);
         },
         Not: ({ expression }) => (...args) =>
-          expression.ops.passthrough(...args),
+          expression.props.passthrough(...args),
         Parenthetical: ({ expression }) => (...args) =>
-          expression.ops.passthrough(...args)
+          expression.props.passthrough(...args)
       }
     }
   });
 
-  schema.parse('not (a or b:"c d") and e>3').ops.passthrough(...input);
+  schema.parse('not (a or b:"c d") and e>3').props.passthrough(...input);
 });
 
-test('child nodes get their ops before their parents', (t) => {
+test('child nodes get their props before their parents', (t) => {
   t.plan(6);
 
   const schema = new Schema({
@@ -184,24 +185,24 @@ test('child nodes get their ops before their parents', (t) => {
         };
       }
     },
-    ops: {
+    props: {
       check: {
         And: ({ left, right }) => {
-          t.true(left.ops.check());
-          t.true(right.ops.check());
+          t.true(left.props.check());
+          t.true(right.props.check());
           return () => true;
         },
         Or: ({ left, right }) => {
-          t.true(left.ops.check());
-          t.true(right.ops.check());
+          t.true(left.props.check());
+          t.true(right.props.check());
           return () => true;
         },
         Not: ({ expression }) => {
-          t.true(expression.ops.check());
+          t.true(expression.props.check());
           return () => true;
         },
         Parenthetical: ({ expression }) => {
-          t.true(expression.ops.check());
+          t.true(expression.props.check());
           return () => true;
         }
       }

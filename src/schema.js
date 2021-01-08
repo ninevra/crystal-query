@@ -12,40 +12,41 @@ export class Schema {
   constructor({
     termHandler = new GenericTermHandler(),
     ignoreInvalid = false,
-    ops = {
+    props = {
       describe: {
         And: ({ left, right }) => () =>
           messages.conjunction({
-            left: left.ops.describe(),
-            right: right.ops.describe()
+            left: left.props.describe(),
+            right: right.props.describe()
           }),
         Or: ({ left, right }) => () =>
           messages.disjunction({
-            left: left.ops.describe(),
-            right: right.ops.describe()
+            left: left.props.describe(),
+            right: right.props.describe()
           }),
         Parenthetical: ({ expression }) => (negated) =>
           messages.parenthetical({
-            expression: expression.ops.describe(),
+            expression: expression.props.describe(),
             negated
           }),
-        Not: ({ expression }) => (negated) => expression.ops.describe(!negated)
+        Not: ({ expression }) => (negated) =>
+          expression.props.describe(!negated)
       },
       predicate: {
         And: ({ left, right }) => (input) =>
-          left.ops.predicate(input) && right.ops.predicate(input),
+          left.props.predicate(input) && right.props.predicate(input),
         Or: ({ left, right }) => (input) =>
-          left.ops.predicate(input) || right.ops.predicate(input),
+          left.props.predicate(input) || right.props.predicate(input),
         Parenthetical: ({ expression }) => (input) =>
-          expression.ops.predicate(input),
-        Not: ({ expression }) => (input) => !expression.ops.predicate(input)
+          expression.props.predicate(input),
+        Not: ({ expression }) => (input) => !expression.props.predicate(input)
       }
     }
   } = {}) {
     this.parser = new Parser();
     this.termHandler = termHandler;
     this.ignoreInvalid = ignoreInvalid;
-    this.ops = ops;
+    this.props = props;
   }
 
   parse(query) {
@@ -53,7 +54,7 @@ export class Schema {
     let errors;
 
     if (status) {
-      this.attachOps(ast);
+      this.attachProps(ast);
       if (this.ignoreInvalid) {
         [ast, errors] = this.ignoringInvalidNodes(ast);
       } else {
@@ -78,13 +79,13 @@ export class Schema {
     }
 
     if (status && ast) {
-      const ops = {};
+      const props = {};
 
-      for (const operation of Object.keys(this.ops)) {
-        ops[operation] = ast.ops[operation];
+      for (const operation of Object.keys(this.props)) {
+        props[operation] = ast.props[operation];
       }
 
-      return { status, errors, ast, ops };
+      return { status, errors, ast, props };
     }
 
     return { status, errors };
@@ -137,25 +138,25 @@ export class Schema {
     }
   }
 
-  attachOps(astNode) {
+  attachProps(astNode) {
     if (astNode === undefined) {
       return;
     }
 
     if (astNode.name === 'And' || astNode.name === 'Or') {
-      this.attachOps(astNode.left);
-      this.attachOps(astNode.right);
+      this.attachProps(astNode.left);
+      this.attachProps(astNode.right);
     } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
-      this.attachOps(astNode.expression);
+      this.attachProps(astNode.expression);
     }
 
-    astNode.ops = {};
+    astNode.props = {};
 
-    for (const operation of Object.keys(this.ops)) {
+    for (const operation of Object.keys(this.props)) {
       if (astNode.name === 'Term') {
-        astNode.ops[operation] = this.termHandler.get(astNode)[operation];
+        astNode.props[operation] = this.termHandler.get(astNode)[operation];
       } else {
-        astNode.ops[operation] = this.ops[operation][astNode.name](astNode);
+        astNode.props[operation] = this.props[operation][astNode.name](astNode);
       }
     }
   }
