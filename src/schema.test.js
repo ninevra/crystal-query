@@ -1,4 +1,4 @@
-import { Schema, describe, predicate } from './schema.js';
+import { Schema, describe, predicate, PropError } from './schema.js';
 import { Parser } from './parser.js';
 import { StringPropertyField } from './terms/StringPropertyField.js';
 import { NumberPropertyField } from './terms/NumberPropertyField.js';
@@ -47,19 +47,31 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
   assertSyntaxError(t, new Schema().parse('foo "'), 'unclosed quotation');
 });
 
+function fromTermHandler(node, terms, prop) {
+  const props = terms.get(node);
+  if (props.status) {
+    return props[prop];
+  }
+
+  throw new PropError(props.error);
+}
+
 test('parse() returns field error on unsupported fields or operators', (t) => {
   const terms = new FieldTermHandler({
     foo: new StringPropertyField('foo', false, 'foo'),
     bar: new NumberPropertyField('bar', false, 'bar')
   });
   const schema = new Schema({
-    props: [
-      describe,
-      predicate,
-      {
-        Term: (node) => terms.get(node)
+    props: {
+      describe: {
+        ...describe,
+        Term: (node) => fromTermHandler(node, terms, 'describe')
+      },
+      predicate: {
+        ...predicate,
+        Term: (node) => fromTermHandler(node, terms, 'predicate')
       }
-    ]
+    }
   });
 
   const result = schema.parse('foo>bar <2 bar:baz baz:foo');
@@ -70,8 +82,11 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
   t.like(result.errors[0], {
     type: 'field',
     message: messages.errorUnsupportedOperator({ name: 'foo', operator: '>' }),
-    start: { offset: 0, line: 1, column: 1 },
-    end: { offset: 7, line: 1, column: 8 }
+    node: {
+      name: 'Term',
+      start: { offset: 0, line: 1, column: 1 },
+      end: { offset: 7, line: 1, column: 8 }
+    }
   });
   t.like(result.errors[1], {
     type: 'field',
@@ -207,13 +222,16 @@ test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) =
   });
 
   const schema = new Schema({
-    props: [
-      describe,
-      predicate,
-      {
-        Term: (node) => terms.get(node)
+    props: {
+      describe: {
+        ...describe,
+        Term: (node) => fromTermHandler(node, terms, 'describe')
+      },
+      predicate: {
+        ...predicate,
+        Term: (node) => fromTermHandler(node, terms, 'predicate')
       }
-    ],
+    },
     ignoreInvalid: true
   });
 
