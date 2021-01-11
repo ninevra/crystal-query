@@ -1,5 +1,4 @@
 import { Parser } from './parser.js';
-import { GenericTermHandler } from './terms/GenericTermHandler.js';
 import * as messages from './messages.js';
 
 export class InvalidNodeError extends Error {
@@ -8,45 +7,67 @@ export class InvalidNodeError extends Error {
   }
 }
 
-export class Schema {
-  constructor({
-    termHandler = new GenericTermHandler(),
-    ignoreInvalid = false,
-    props = {
-      describe: {
-        And: ({ left, right }) => () =>
-          messages.conjunction({
-            left: left.props.describe(),
-            right: right.props.describe()
-          }),
-        Or: ({ left, right }) => () =>
-          messages.disjunction({
-            left: left.props.describe(),
-            right: right.props.describe()
-          }),
-        Parenthetical: ({ expression }) => (negated) =>
-          messages.parenthetical({
-            expression: expression.props.describe(),
-            negated
-          }),
-        Not: ({ expression }) => (negated) =>
-          expression.props.describe(!negated)
-      },
-      predicate: {
-        And: ({ left, right }) => (input) =>
-          left.props.predicate(input) && right.props.predicate(input),
-        Or: ({ left, right }) => (input) =>
-          left.props.predicate(input) || right.props.predicate(input),
-        Parenthetical: ({ expression }) => (input) =>
-          expression.props.predicate(input),
-        Not: ({ expression }) => (input) => !expression.props.predicate(input)
+export const describe = {
+  describe: {
+    And: ({ left, right }) => () =>
+      messages.conjunction({
+        left: left.props.describe(),
+        right: right.props.describe()
+      }),
+    Or: ({ left, right }) => () =>
+      messages.disjunction({
+        left: left.props.describe(),
+        right: right.props.describe()
+      }),
+    Parenthetical: ({ expression }) => (negated) =>
+      messages.parenthetical({
+        expression: expression.props.describe(),
+        negated
+      }),
+    Not: ({ expression }) => (negated) => expression.props.describe(!negated),
+    Term: ({ field, operator, value }) => (negated) =>
+      `${negated ? 'not ' : ''}${field ?? ''}${operator ?? ''}"${value ?? ''}"`
+  }
+};
+
+export const predicate = {
+  predicate: {
+    And: ({ left, right }) => (input) =>
+      left.props.predicate(input) && right.props.predicate(input),
+    Or: ({ left, right }) => (input) =>
+      left.props.predicate(input) || right.props.predicate(input),
+    Parenthetical: ({ expression }) => (input) =>
+      expression.props.predicate(input),
+    Not: ({ expression }) => (input) => !expression.props.predicate(input),
+    Term: ({ field, operator, value }) => (input) => {
+      input = input?.[field];
+      value = value ?? '';
+      switch (operator) {
+        case undefined:
+        case ':':
+          return input?.includes?.(value) ?? false;
+        case '>':
+          return input > value;
+        case '>=':
+          return input >= value;
+        case '=':
+          return input == value; // eslint-disable-line eqeqeq
+        case '<=':
+          return input <= value;
+        case '<':
+          return input < value;
+        default:
+          return false;
       }
     }
-  } = {}) {
+  }
+};
+
+export class Schema {
+  constructor({ ignoreInvalid = false, props = [describe, predicate] } = {}) {
     this.parser = new Parser();
-    this.termHandler = termHandler;
     this.ignoreInvalid = ignoreInvalid;
-    this.props = props;
+    this.props = normalizeProps(props);
   }
 
   parse(query) {
@@ -55,10 +76,10 @@ export class Schema {
 
     if (status) {
       this.attachProps(ast);
+      errors = collectErrors(ast);
       if (this.ignoreInvalid) {
-        [ast, errors] = this.ignoringInvalidNodes(ast);
+        ast = this.ignoringInvalidNodes(ast);
       } else {
-        errors = this.validateNode(ast);
         status = errors.length === 0;
       }
     } else {
@@ -81,8 +102,8 @@ export class Schema {
     if (status && ast) {
       const props = {};
 
-      for (const operation of Object.keys(this.props)) {
-        props[operation] = ast.props[operation];
+      for (const prop of Object.keys(ast.props)) {
+        props[prop] = ast.props[prop];
       }
 
       return { status, errors, ast, props };
@@ -99,43 +120,34 @@ export class Schema {
   //
   // Returns [AST, errors]
   ignoringInvalidNodes(astNode) {
-    if (astNode === undefined) {
-      return [undefined, []];
+    if (astNode === undefined || astNode.props.status === false) {
+      return undefined;
     }
 
     if (astNode.name === 'And' || astNode.name === 'Or') {
-      const [left, leftErrors] = this.ignoringInvalidNodes(astNode.left);
-      const [right, rightErrors] = this.ignoringInvalidNodes(astNode.right);
-      const errors = [...leftErrors, ...rightErrors];
+      const left = this.ignoringInvalidNodes(astNode.left);
+      const right = this.ignoringInvalidNodes(astNode.right);
 
       if (left === undefined && right === undefined) {
-        return [undefined, errors];
+        return undefined;
       } else if (left === undefined) {
-        return [right, errors];
+        return right;
       } else if (right === undefined) {
-        return [left, errors];
+        return left;
       }
 
-      return [{ ...astNode, left, right }, errors];
+      return { ...astNode, left, right };
     } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
-      const [expression, errors] = this.ignoringInvalidNodes(
-        astNode.expression
-      );
+      const expression = this.ignoringInvalidNodes(astNode.expression);
 
       if (expression === undefined) {
-        return [undefined, errors];
+        return undefined;
       }
 
-      return [{ ...astNode, expression }, errors];
-    } else if (astNode.name === 'Term') {
-      const { status, error } = this.termHandler.get(astNode);
-
-      if (status) {
-        return [astNode, []];
-      }
-
-      return [undefined, [error]];
+      return { ...astNode, expression };
     }
+
+    return astNode;
   }
 
   attachProps(astNode) {
@@ -152,43 +164,65 @@ export class Schema {
 
     astNode.props = {};
 
-    for (const operation of Object.keys(this.props)) {
-      if (astNode.name === 'Term') {
-        astNode.props[operation] = this.termHandler.get(astNode)[operation];
-      } else {
-        astNode.props[operation] = this.props[operation][astNode.name](astNode);
-      }
-    }
-  }
-
-  validateNode(astNode) {
-    if (astNode === undefined) {
-      return [];
-    }
-
-    switch (astNode.name) {
-      case 'And':
-      case 'Or':
-        return [
-          ...this.validateNode(astNode.left),
-          ...this.validateNode(astNode.right)
-        ];
-      case 'Not':
-        return this.validateNode(astNode.expression);
-      case 'Parenthetical':
-        return this.validateNode(astNode.expression);
-      case 'Term': {
-        const { status, error } = this.termHandler.get(astNode);
-        if (status) {
-          return [];
+    Object.assign(
+      astNode.props,
+      ...this.props.map((mixin) => {
+        if (Object.prototype.hasOwnProperty.call(mixin, astNode.name)) {
+          return mixin[astNode.name](astNode);
         }
 
-        const { start, end, value } = astNode;
-        return [{ type: 'field', start, end, value, message: error }];
+        return undefined;
+      })
+    );
+  }
+}
+
+function normalizeProps(props) {
+  if (!Array.isArray(props)) {
+    props = [props];
+  }
+
+  return props.flatMap((mixin) => normalizeMixin(mixin));
+}
+
+function normalizeMixin(mixin) {
+  if (
+    Object.keys(mixin).some(
+      (key) => !['And', 'Or', 'Not', 'Parenthetical', 'Term'].includes(key)
+    )
+  ) {
+    // If any key of the mixin is _not_ a valid node name, then it's a
+    // prop-first mixin. Map this to one node-first mixin per prop.
+    return Object.entries(mixin).map(([prop, nodeImpls]) => {
+      const normalized = {};
+      for (const [nodeType, impl] of Object.entries(nodeImpls)) {
+        normalized[nodeType] = (node) => ({ [prop]: impl(node) });
       }
 
-      default:
-        throw new InvalidNodeError(astNode);
-    }
+      return normalized;
+    });
   }
+
+  // Otherwise it's already a node-first mixin
+  return [mixin];
+}
+
+function collectErrors(astNode) {
+  if (astNode === undefined) {
+    return [];
+  }
+
+  const errors = astNode.props.error === undefined ? [] : [astNode.props.error];
+
+  if (astNode.name === 'And' || astNode.name === 'Or') {
+    return [
+      ...errors,
+      ...collectErrors(astNode.left),
+      ...collectErrors(astNode.right)
+    ];
+  } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
+    return [...errors, ...collectErrors(astNode.expression)];
+  }
+
+  return errors;
 }

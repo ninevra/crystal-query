@@ -1,4 +1,4 @@
-import { Schema } from './schema.js';
+import { Schema, describe, predicate } from './schema.js';
 import { Parser } from './parser.js';
 import { StringPropertyField } from './terms/StringPropertyField.js';
 import { NumberPropertyField } from './terms/NumberPropertyField.js';
@@ -7,6 +7,7 @@ import * as messages from './messages.js';
 import test from 'ava';
 
 test('parse().props.describe() renders query descriptions', (t) => {
+  debugger; // eslint-disable-line no-debugger
   const query = 'not (a or b:"c d") and e>3';
   const description = new Schema().parse(query).props.describe();
   t.snapshot(description);
@@ -47,12 +48,20 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
 });
 
 test('parse() returns field error on unsupported fields or operators', (t) => {
-  const schema = new Schema({
-    termHandler: new FieldTermHandler({
-      foo: new StringPropertyField('foo', false, 'foo'),
-      bar: new NumberPropertyField('bar', false, 'bar')
-    })
+  const terms = new FieldTermHandler({
+    foo: new StringPropertyField('foo', false, 'foo'),
+    bar: new NumberPropertyField('bar', false, 'bar')
   });
+  const schema = new Schema({
+    props: [
+      describe,
+      predicate,
+      {
+        Term: (node) => terms.get(node)
+      }
+    ]
+  });
+
   const result = schema.parse('foo>bar <2 bar:baz baz:foo');
   t.like(result, {
     status: false
@@ -115,14 +124,6 @@ test('parse() returns all applicable of ast, operations, errors', (t) => {
 
 test('Schema() attaches custom operations to ASTs', (t) => {
   const schema = new Schema({
-    termHandler: {
-      get() {
-        return {
-          status: true,
-          count: () => 1
-        };
-      }
-    },
     props: {
       count: {
         And: ({ left, right }) => () =>
@@ -130,7 +131,8 @@ test('Schema() attaches custom operations to ASTs', (t) => {
         Or: ({ left, right }) => () =>
           left.props.count() + right.props.count() + 1,
         Not: ({ expression }) => () => expression.props.count() + 1,
-        Parenthetical: ({ expression }) => () => expression.props.count() + 1
+        Parenthetical: ({ expression }) => () => expression.props.count() + 1,
+        Term: () => () => 1
       }
     }
   });
@@ -144,14 +146,6 @@ test('Custom operations can carry through arguments', (t) => {
   const input = [1, 'foo', Symbol('bar')];
 
   const schema = new Schema({
-    termHandler: {
-      get() {
-        return {
-          status: true,
-          passthrough: (...args) => t.deepEqual(args, input)
-        };
-      }
-    },
     props: {
       passthrough: {
         And: ({ left, right }) => (...args) => {
@@ -165,7 +159,8 @@ test('Custom operations can carry through arguments', (t) => {
         Not: ({ expression }) => (...args) =>
           expression.props.passthrough(...args),
         Parenthetical: ({ expression }) => (...args) =>
-          expression.props.passthrough(...args)
+          expression.props.passthrough(...args),
+        Term: () => (...args) => t.deepEqual(args, input)
       }
     }
   });
@@ -177,14 +172,6 @@ test('child nodes get their props before their parents', (t) => {
   t.plan(6);
 
   const schema = new Schema({
-    termHandler: {
-      get() {
-        return {
-          status: true,
-          check: () => true
-        };
-      }
-    },
     props: {
       check: {
         And: ({ left, right }) => {
@@ -204,7 +191,8 @@ test('child nodes get their props before their parents', (t) => {
         Parenthetical: ({ expression }) => {
           t.true(expression.props.check());
           return () => true;
-        }
+        },
+        Term: () => () => true
       }
     }
   });
@@ -213,11 +201,19 @@ test('child nodes get their props before their parents', (t) => {
 });
 
 test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) => {
+  const terms = new FieldTermHandler({
+    foo: new StringPropertyField('foo', false, 'foo'),
+    bar: new NumberPropertyField('bar', false, 'bar')
+  });
+
   const schema = new Schema({
-    termHandler: new FieldTermHandler({
-      foo: new StringPropertyField('foo', false, 'foo'),
-      bar: new NumberPropertyField('bar', false, 'bar')
-    }),
+    props: [
+      describe,
+      predicate,
+      {
+        Term: (node) => terms.get(node)
+      }
+    ],
     ignoreInvalid: true
   });
 
@@ -227,5 +223,6 @@ test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) =
   t.like(schema.parse('foo and bar'), { status: true, ast: undefined });
   t.like(schema.parse('foo or bar'), { status: true, ast: undefined });
 
+  debugger; // eslint-disable-line no-debugger
   t.snapshot(schema.parse('foo:hello and bar=quux not foo>bar'));
 });

@@ -5,7 +5,6 @@ test('import() should import all classes, messages', async (t) => {
   t.true(typeof mod.Parser === 'function');
   t.true(typeof mod.Schema === 'function');
   t.true(typeof mod.FieldTermHandler === 'function');
-  t.true(typeof mod.GenericTermHandler === 'function');
   t.true(typeof mod.NumberPropertyField === 'function');
   t.true(typeof mod.StringPropertyField === 'function');
   t.true(typeof mod.StringArrayPropertyField === 'function');
