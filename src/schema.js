@@ -78,7 +78,7 @@ export class Schema {
       attachProps(ast, this.props);
       errors = collectErrors(ast);
       if (this.ignoreInvalid) {
-        ast = this.ignoringInvalidNodes(ast);
+        ast = ignoringInvalidNodes(ast);
       } else {
         status = errors.length === 0;
       }
@@ -111,44 +111,44 @@ export class Schema {
 
     return { status, errors };
   }
+}
 
-  // Returns a new AST in which invalid terms have been removed, nodes with only
-  // invalid children have been removed, and nodes with one invalid child have
-  // been replaced by their valid child.
-  //
-  // The returned AST may be undefined if nothing remained.
-  //
-  // Returns [AST, errors]
-  ignoringInvalidNodes(astNode) {
-    if (astNode === undefined || astNode.props.status === false) {
+// Returns a new AST in which invalid terms have been removed, nodes with only
+// invalid children have been removed, and nodes with one invalid child have
+// been replaced by their valid child.
+//
+// The returned AST may be undefined if nothing remained.
+//
+// Returns [AST, errors]
+function ignoringInvalidNodes(astNode) {
+  if (astNode === undefined || astNode.props.status === false) {
+    return undefined;
+  }
+
+  if (astNode.name === 'And' || astNode.name === 'Or') {
+    const left = ignoringInvalidNodes(astNode.left);
+    const right = ignoringInvalidNodes(astNode.right);
+
+    if (left === undefined && right === undefined) {
+      return undefined;
+    } else if (left === undefined) {
+      return right;
+    } else if (right === undefined) {
+      return left;
+    }
+
+    return { ...astNode, left, right };
+  } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
+    const expression = ignoringInvalidNodes(astNode.expression);
+
+    if (expression === undefined) {
       return undefined;
     }
 
-    if (astNode.name === 'And' || astNode.name === 'Or') {
-      const left = this.ignoringInvalidNodes(astNode.left);
-      const right = this.ignoringInvalidNodes(astNode.right);
-
-      if (left === undefined && right === undefined) {
-        return undefined;
-      } else if (left === undefined) {
-        return right;
-      } else if (right === undefined) {
-        return left;
-      }
-
-      return { ...astNode, left, right };
-    } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
-      const expression = this.ignoringInvalidNodes(astNode.expression);
-
-      if (expression === undefined) {
-        return undefined;
-      }
-
-      return { ...astNode, expression };
-    }
-
-    return astNode;
+    return { ...astNode, expression };
   }
+
+  return astNode;
 }
 
 function attachProps(astNode, props) {
