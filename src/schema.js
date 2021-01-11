@@ -75,7 +75,7 @@ export class Schema {
     let errors;
 
     if (status) {
-      this.attachProps(ast);
+      attachProps(ast, this.props);
       errors = collectErrors(ast);
       if (this.ignoreInvalid) {
         ast = this.ignoringInvalidNodes(ast);
@@ -149,32 +149,32 @@ export class Schema {
 
     return astNode;
   }
+}
 
-  attachProps(astNode) {
-    if (astNode === undefined) {
-      return;
-    }
-
-    if (astNode.name === 'And' || astNode.name === 'Or') {
-      this.attachProps(astNode.left);
-      this.attachProps(astNode.right);
-    } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
-      this.attachProps(astNode.expression);
-    }
-
-    astNode.props = {};
-
-    Object.assign(
-      astNode.props,
-      ...this.props.map((mixin) => {
-        if (Object.prototype.hasOwnProperty.call(mixin, astNode.name)) {
-          return mixin[astNode.name](astNode);
-        }
-
-        return undefined;
-      })
-    );
+function attachProps(astNode, props) {
+  if (astNode === undefined) {
+    return;
   }
+
+  if (astNode.name === 'And' || astNode.name === 'Or') {
+    attachProps(astNode.left, props);
+    attachProps(astNode.right, props);
+  } else if (astNode.name === 'Not' || astNode.name === 'Parenthetical') {
+    attachProps(astNode.expression, props);
+  }
+
+  astNode.props = {};
+
+  Object.assign(
+    astNode.props,
+    ...props.map((mixin) => {
+      if (Object.prototype.hasOwnProperty.call(mixin, astNode.name)) {
+        return mixin[astNode.name](astNode);
+      }
+
+      return undefined;
+    })
+  );
 }
 
 function normalizeProps(props) {
