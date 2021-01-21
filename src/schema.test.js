@@ -7,7 +7,6 @@ import * as messages from './messages.js';
 import test from 'ava';
 
 test('parse().props.describe() renders query descriptions', (t) => {
-  debugger; // eslint-disable-line no-debugger
   const query = 'not (a or b:"c d") and e>3';
   const description = new Schema().parse(query).props.describe();
   t.snapshot(description);
@@ -232,6 +231,5 @@ test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) =
   t.like(schema.parse('foo and bar'), { status: true, ast: undefined });
   t.like(schema.parse('foo or bar'), { status: true, ast: undefined });
 
-  debugger; // eslint-disable-line no-debugger
   t.snapshot(schema.parse('foo:hello and bar=quux not foo>bar'));
 });
