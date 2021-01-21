@@ -1,12 +1,6 @@
 import { Parser } from './parser.js';
 import * as messages from './messages.js';
 
-export class InvalidNodeError extends Error {
-  constructor(astNode) {
-    super(`Invalid AST node ${JSON.stringify(astNode)}`);
-  }
-}
-
 export class PropError extends Error {
   constructor(message, data) {
     super(message);
