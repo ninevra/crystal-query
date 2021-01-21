@@ -1,4 +1,4 @@
-import { Schema, describe, predicate, PropError } from './schema.js';
+import { Schema, describe, predicate } from './schema.js';
 import { Parser } from './parser.js';
 import { StringPropertyField } from './terms/StringPropertyField.js';
 import { NumberPropertyField } from './terms/NumberPropertyField.js';
@@ -47,15 +47,6 @@ test('parse() returns syntax error on unclosed quotes', (t) => {
   assertSyntaxError(t, new Schema().parse('foo "'), 'unclosed quotation');
 });
 
-function fromTermHandler(node, terms, prop) {
-  const props = terms.get(node);
-  if (props.status) {
-    return props[prop];
-  }
-
-  throw new PropError(props.error);
-}
-
 test('parse() returns field error on unsupported fields or operators', (t) => {
   const terms = new FieldTermHandler({
     foo: new StringPropertyField('foo', false, 'foo'),
@@ -65,11 +56,11 @@ test('parse() returns field error on unsupported fields or operators', (t) => {
     props: {
       describe: {
         ...describe,
-        Term: (node) => fromTermHandler(node, terms, 'describe')
+        Term: (node) => terms.get(node).describe
       },
       predicate: {
         ...predicate,
-        Term: (node) => fromTermHandler(node, terms, 'predicate')
+        Term: (node) => terms.get(node).predicate
       }
     }
   });
@@ -225,11 +216,11 @@ test('ignoreInvalid prunes invalid terms and nodes with invalid children', (t) =
     props: {
       describe: {
         ...describe,
-        Term: (node) => fromTermHandler(node, terms, 'describe')
+        Term: (node) => terms.get(node).describe
       },
       predicate: {
         ...predicate,
-        Term: (node) => fromTermHandler(node, terms, 'predicate')
+        Term: (node) => terms.get(node).predicate
       }
     },
     ignoreInvalid: true
