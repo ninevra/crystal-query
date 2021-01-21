@@ -128,15 +128,11 @@ function postprocess(ast, options) {
     const [right, rightErrors] = postprocess(ast.right, options);
     const errors = [...leftErrors, ...rightErrors];
 
-    if (options.ignoreInvalid) {
-      if (left === undefined && right === undefined) {
-        return [undefined, errors];
-      } else if (left === undefined) {
-        return [right, errors];
-      } else if (right === undefined) {
-        return [left, errors];
+    if (left === undefined || right === undefined) {
+      if (options.ignoreInvalid) {
+        return [left ?? right, errors];
       }
-    } else if (errors.length > 0) {
+
       return [undefined, errors];
     }
 
@@ -152,11 +148,7 @@ function postprocess(ast, options) {
   } else if (ast.name === 'Not' || ast.name === 'Parenthetical') {
     const [expression, errors] = postprocess(ast.expression, options);
 
-    if (options.ignoreInvalid) {
-      if (expression === undefined) {
-        return [undefined, errors];
-      }
-    } else if (errors.length > 0) {
+    if (expression === undefined) {
       return [undefined, errors];
     }
 
