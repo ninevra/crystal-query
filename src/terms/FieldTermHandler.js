@@ -17,11 +17,10 @@ export class FieldTermHandler {
   ) {
     this.fields = fields;
 
-    if (typeof defaultField === 'string') {
-      this.defaultField = this.fields[defaultField];
-    } else {
-      this.defaultField = defaultField;
-    }
+    this.defaultField =
+      typeof defaultField === 'string'
+        ? this.fields[defaultField]
+        : defaultField;
 
     this.errorDesciptors = {
       noField,

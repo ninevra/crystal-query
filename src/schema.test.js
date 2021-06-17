@@ -1,10 +1,10 @@
+import test from 'ava';
 import { Schema, describe, predicate } from './schema.js';
 import { Parser } from './parser.js';
 import { StringPropertyField } from './terms/StringPropertyField.js';
 import { NumberPropertyField } from './terms/NumberPropertyField.js';
 import { FieldTermHandler } from './terms/FieldTermHandler.js';
 import * as messages from './messages.js';
-import test from 'ava';
 
 test('parse().props.describe() renders query descriptions', (t) => {
   const query = 'not (a or b:"c d") and e>3';
@@ -131,12 +131,22 @@ test('Schema() attaches custom operations to ASTs', (t) => {
   const schema = new Schema({
     props: {
       count: {
-        And: ({ left, right }) => () =>
-          left.props.count() + right.props.count() + 1,
-        Or: ({ left, right }) => () =>
-          left.props.count() + right.props.count() + 1,
-        Not: ({ expression }) => () => expression.props.count() + 1,
-        Parenthetical: ({ expression }) => () => expression.props.count() + 1,
+        And:
+          ({ left, right }) =>
+          () =>
+            left.props.count() + right.props.count() + 1,
+        Or:
+          ({ left, right }) =>
+          () =>
+            left.props.count() + right.props.count() + 1,
+        Not:
+          ({ expression }) =>
+          () =>
+            expression.props.count() + 1,
+        Parenthetical:
+          ({ expression }) =>
+          () =>
+            expression.props.count() + 1,
         Term: () => () => 1
       }
     }
@@ -153,19 +163,30 @@ test('Custom operations can carry through arguments', (t) => {
   const schema = new Schema({
     props: {
       passthrough: {
-        And: ({ left, right }) => (...args) => {
-          left.props.passthrough(...args);
-          right.props.passthrough(...args);
-        },
-        Or: ({ left, right }) => (...args) => {
-          left.props.passthrough(...args);
-          right.props.passthrough(...args);
-        },
-        Not: ({ expression }) => (...args) =>
-          expression.props.passthrough(...args),
-        Parenthetical: ({ expression }) => (...args) =>
-          expression.props.passthrough(...args),
-        Term: () => (...args) => t.deepEqual(args, input)
+        And:
+          ({ left, right }) =>
+          (...args) => {
+            left.props.passthrough(...args);
+            right.props.passthrough(...args);
+          },
+        Or:
+          ({ left, right }) =>
+          (...args) => {
+            left.props.passthrough(...args);
+            right.props.passthrough(...args);
+          },
+        Not:
+          ({ expression }) =>
+          (...args) =>
+            expression.props.passthrough(...args),
+        Parenthetical:
+          ({ expression }) =>
+          (...args) =>
+            expression.props.passthrough(...args),
+        Term:
+          () =>
+          (...args) =>
+            t.deepEqual(args, input)
       }
     }
   });

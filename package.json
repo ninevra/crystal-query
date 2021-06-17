@@ -42,7 +42,7 @@
     "c8": "^7.4.0",
     "onchange": "^7.1.0",
     "prettier": "^2.2.1",
-    "xo": "^0.37.1"
+    "xo": "^0.40.2"
   },
   "ava": {
     "files": [
@@ -71,6 +71,14 @@
           "allowElseIf": true
         }
       ]
-    }
+    },
+    "overrides": [
+      {
+        "files": "**/*.cjs",
+        "rules": {
+          "unicorn/prefer-module": "off"
+        }
+      }
+    ]
   }
 }

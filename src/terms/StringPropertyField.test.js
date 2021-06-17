@@ -1,5 +1,5 @@
-import { StringPropertyField } from './StringPropertyField.js';
 import test from 'ava';
+import { StringPropertyField } from './StringPropertyField.js';
 
 test('StringPropertyField supports ":"', (t) => {
   const field = new StringPropertyField('some field', false, 'foo')[':']('bar');

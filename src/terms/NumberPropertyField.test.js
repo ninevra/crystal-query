@@ -1,6 +1,6 @@
-import { NumberPropertyField } from './NumberPropertyField.js';
-import * as messages from '../messages.js';
 import test from 'ava';
+import * as messages from '../messages.js';
+import { NumberPropertyField } from './NumberPropertyField.js';
 
 test.beforeEach((t) => {
   t.context.number = new NumberPropertyField('a number', false, 'prop');

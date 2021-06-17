@@ -1,6 +1,6 @@
+import * as messages from './messages.js';
 export { Parser } from './parser.js';
 export { Schema, PropError } from './schema.js';
-import * as messages from './messages.js';
 export { messages };
 export { FieldTermHandler } from './terms/FieldTermHandler.js';
 export { NumberPropertyField } from './terms/NumberPropertyField.js';

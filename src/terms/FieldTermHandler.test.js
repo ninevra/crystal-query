@@ -1,8 +1,7 @@
+import test from 'ava';
 import { StringPropertyField } from './StringPropertyField.js';
 import { NumberPropertyField } from './NumberPropertyField.js';
 import { FieldTermHandler } from './FieldTermHandler.js';
-
-import test from 'ava';
 
 test.beforeEach((t) => {
   t.context.string = new StringPropertyField('some field', false, 'foo');

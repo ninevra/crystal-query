@@ -1,5 +1,5 @@
-import { StringArrayPropertyField } from './StringArrayPropertyField.js';
 import test from 'ava';
+import { StringArrayPropertyField } from './StringArrayPropertyField.js';
 
 test('supports ":"', (t) => {
   const field = new StringArrayPropertyField('some strings', true, 'foo');

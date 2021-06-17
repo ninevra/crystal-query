@@ -15,55 +15,77 @@ export class PropError extends Error {
 PropError.prototype[Symbol.for('crystal-query:prop-error')] = true;
 
 export const describe = {
-  And: ({ left, right }) => () =>
-    messages.conjunction({
-      left: left.props.describe(),
-      right: right.props.describe()
-    }),
-  Or: ({ left, right }) => () =>
-    messages.disjunction({
-      left: left.props.describe(),
-      right: right.props.describe()
-    }),
-  Parenthetical: ({ expression }) => (negated) =>
-    messages.parenthetical({
-      expression: expression.props.describe(),
-      negated
-    }),
-  Not: ({ expression }) => (negated) => expression.props.describe(!negated),
-  Term: ({ field, operator, value }) => (negated) =>
-    `${negated ? 'not ' : ''}${field ?? ''}${operator ?? ''}"${value ?? ''}"`
+  And:
+    ({ left, right }) =>
+    () =>
+      messages.conjunction({
+        left: left.props.describe(),
+        right: right.props.describe()
+      }),
+  Or:
+    ({ left, right }) =>
+    () =>
+      messages.disjunction({
+        left: left.props.describe(),
+        right: right.props.describe()
+      }),
+  Parenthetical:
+    ({ expression }) =>
+    (negated) =>
+      messages.parenthetical({
+        expression: expression.props.describe(),
+        negated
+      }),
+  Not:
+    ({ expression }) =>
+    (negated) =>
+      expression.props.describe(!negated),
+  Term:
+    ({ field, operator, value }) =>
+    (negated) =>
+      `${negated ? 'not ' : ''}${field ?? ''}${operator ?? ''}"${value ?? ''}"`
 };
 
 export const predicate = {
-  And: ({ left, right }) => (input) =>
-    left.props.predicate(input) && right.props.predicate(input),
-  Or: ({ left, right }) => (input) =>
-    left.props.predicate(input) || right.props.predicate(input),
-  Parenthetical: ({ expression }) => (input) =>
-    expression.props.predicate(input),
-  Not: ({ expression }) => (input) => !expression.props.predicate(input),
-  Term: ({ field, operator, value }) => (input) => {
-    input = input?.[field];
-    value = value ?? '';
-    switch (operator) {
-      case undefined:
-      case ':':
-        return input?.includes?.(value) ?? false;
-      case '>':
-        return input > value;
-      case '>=':
-        return input >= value;
-      case '=':
-        return input == value; // eslint-disable-line eqeqeq
-      case '<=':
-        return input <= value;
-      case '<':
-        return input < value;
-      default:
-        return false;
+  And:
+    ({ left, right }) =>
+    (input) =>
+      left.props.predicate(input) && right.props.predicate(input),
+  Or:
+    ({ left, right }) =>
+    (input) =>
+      left.props.predicate(input) || right.props.predicate(input),
+  Parenthetical:
+    ({ expression }) =>
+    (input) =>
+      expression.props.predicate(input),
+  Not:
+    ({ expression }) =>
+    (input) =>
+      !expression.props.predicate(input),
+  Term:
+    ({ field, operator, value }) =>
+    (input) => {
+      input = input?.[field];
+      value = value ?? '';
+      switch (operator) {
+        case undefined:
+        case ':':
+          return input?.includes?.(value) ?? false;
+        case '>':
+          return input > value;
+        case '>=':
+          return input >= value;
+        case '=':
+          return input == value; // eslint-disable-line eqeqeq
+        case '<=':
+          return input <= value;
+        case '<':
+          return input < value;
+        default:
+          return false;
+      }
     }
-  }
 };
 
 export class Schema {
@@ -117,52 +139,63 @@ export class Schema {
 function postprocess(ast, options) {
   if (ast === undefined) {
     return undefined;
-  } else if (ast.name === 'And' || ast.name === 'Or') {
-    const [left, leftErrors] = postprocess(ast.left, options);
-    const [right, rightErrors] = postprocess(ast.right, options);
-    const errors = [...leftErrors, ...rightErrors];
+  }
 
-    if (left === undefined || right === undefined) {
-      if (options.ignoreInvalid) {
-        return [left ?? right, errors];
+  switch (ast.name) {
+    case 'And':
+    case 'Or': {
+      const [left, leftErrors] = postprocess(ast.left, options);
+      const [right, rightErrors] = postprocess(ast.right, options);
+      const errors = [...leftErrors, ...rightErrors];
+
+      if (left === undefined || right === undefined) {
+        if (options.ignoreInvalid) {
+          return [left ?? right, errors];
+        }
+
+        return [undefined, errors];
       }
 
-      return [undefined, errors];
+      ast = { ...ast, left, right };
+
+      const props = computeProps(ast, options.props);
+
+      if (props.status) {
+        return [{ ...ast, props: props.value }, errors];
+      }
+
+      return [undefined, [...errors, props.error]];
     }
 
-    ast = { ...ast, left, right };
+    case 'Not':
+    case 'Parenthetical': {
+      const [expression, errors] = postprocess(ast.expression, options);
 
-    const props = computeProps(ast, options.props);
+      if (expression === undefined) {
+        return [undefined, errors];
+      }
 
-    if (props.status) {
-      return [{ ...ast, props: props.value }, errors];
+      ast = { ...ast, expression };
+
+      const props = computeProps(ast, options.props);
+
+      if (props.status) {
+        return [{ ...ast, props: props.value }, errors];
+      }
+
+      return [undefined, [...errors, props.unwrapErr()]];
     }
 
-    return [undefined, [...errors, props.error]];
-  } else if (ast.name === 'Not' || ast.name === 'Parenthetical') {
-    const [expression, errors] = postprocess(ast.expression, options);
+    case 'Term': {
+      const props = computeProps(ast, options.props);
 
-    if (expression === undefined) {
-      return [undefined, errors];
+      if (props.status) {
+        return [{ ...ast, props: props.value }, []];
+      }
+
+      return [undefined, [props.error]];
     }
-
-    ast = { ...ast, expression };
-
-    const props = computeProps(ast, options.props);
-
-    if (props.status) {
-      return [{ ...ast, props: props.value }, errors];
-    }
-
-    return [undefined, [...errors, props.unwrapErr()]];
-  } else if (ast.name === 'Term') {
-    const props = computeProps(ast, options.props);
-
-    if (props.status) {
-      return [{ ...ast, props: props.value }, []];
-    }
-
-    return [undefined, [props.error]];
+    // No default
   }
 }
 
