@@ -3,9 +3,7 @@ import { Parser } from './parser.js';
 
 const macro = test.macro((t, inputs) => {
   for (const input of inputs) {
-    /* eslint-disable ava/assertion-arguments */
-    t.snapshot(new Parser().parse(input), input);
-    /* eslint-enable ava/assertion-arguments */
+    t.snapshot(new Parser().parse(input), `"${input}"`);
   }
 });
 
@@ -44,3 +42,11 @@ test('parens', macro, [
   '(or)',
   '(not)'
 ]);
+
+test('expressions', macro, [
+  'a:one or b:two and not c:three',
+  '(a:one or (b:two)) and not c:three',
+  'not not a:one and b:two'
+]);
+
+test('whitespace', macro, ['', '   ', '\t ', ' a:one', 'a:one ', ' a:one ']);
