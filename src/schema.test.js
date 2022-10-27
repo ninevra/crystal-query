@@ -200,21 +200,21 @@ test('child nodes get their props before their parents', (t) => {
   const schema = new Schema({
     props: {
       check: {
-        And: ({ left, right }) => {
+        And({ left, right }) {
           t.true(left.props.check());
           t.true(right.props.check());
           return () => true;
         },
-        Or: ({ left, right }) => {
+        Or({ left, right }) {
           t.true(left.props.check());
           t.true(right.props.check());
           return () => true;
         },
-        Not: ({ expression }) => {
+        Not({ expression }) {
           t.true(expression.props.check());
           return () => true;
         },
-        Parenthetical: ({ expression }) => {
+        Parenthetical({ expression }) {
           t.true(expression.props.check());
           return () => true;
         },
