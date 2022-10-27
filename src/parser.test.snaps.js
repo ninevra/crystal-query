@@ -1,9 +1,10 @@
 import test from 'ava';
+import jsStringEscape from 'js-string-escape';
 import { Parser } from './parser.js';
 
 const macro = test.macro((t, inputs) => {
   for (const input of inputs) {
-    t.snapshot(new Parser().parse(input), `"${input}"`);
+    t.snapshot(new Parser().parse(input), `"${jsStringEscape(input)}"`);
   }
 });
 
@@ -50,3 +51,17 @@ test('expressions', macro, [
 ]);
 
 test('whitespace', macro, ['', '   ', '\t ', ' a:one', 'a:one ', ' a:one ']);
+
+test('strings', macro, [
+  '"foo:bar"',
+  '""',
+  '" "',
+  '"(a:one and two) or not three"',
+  '"""',
+  '""""',
+  'a:"""""',
+  String.raw`"\""`,
+  "''",
+  `'""'`,
+  String.raw`"\\""`
+]);
