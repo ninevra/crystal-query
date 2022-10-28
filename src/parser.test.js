@@ -1,183 +1,123 @@
 import test from 'ava';
 import parsimmon from 'parsimmon';
+import jsStringEscape from 'js-string-escape';
 import { Parser } from './parser.js';
 
-test('language.operator recognizes string operators', (t) => {
-  const { operator } = new Parser().language;
-  t.like(operator.parse('>='), { status: true, value: '>=' });
-  t.like(operator.parse('='), { status: true, value: '=' });
-});
+const nonterminalMacro = test.macro({
+  exec(t, nonterminal, input) {
+    t.snapshot(
+      new Parser().language[nonterminal].parse(input),
+      `${nonterminal}: "${jsStringEscape(input)}"`
+    );
+  },
+  title(providedTitle, nonterminal, input) {
+    const title = `${nonterminal}: "${jsStringEscape(input)}"`;
 
-test('language.word recognizes words', (t) => {
-  const { word } = new Parser().language;
-  const expected = { status: true, value: 'foo' };
-  t.deepEqual(word.parse('foo'), expected);
-});
-
-test('language.word recognizes words when followed by terminators', (t) => {
-  const { word } = new Parser().language;
-  const wordThenEnd = word.skip(parsimmon.all);
-  const expected = { status: true, value: 'foo' };
-  t.deepEqual(wordThenEnd.parse('foo='), expected);
-  t.deepEqual(wordThenEnd.parse('foo"bar"'), expected);
-  t.deepEqual(wordThenEnd.parse('foo(bar)'), expected);
-  t.deepEqual(wordThenEnd.parse('foo>='), expected);
-});
-
-test('language.word does not recognize non-words', (t) => {
-  const word = new Parser().language.word;
-  t.like(word.parse('>'), { status: false });
-  t.like(word.parse('"foo"'), { status: false });
-  t.like(word.parse(''), { status: false });
-  t.false(word.parse('foo=').status);
-});
-
-test('language.string recognizes string phrases', (t) => {
-  const string = new Parser().language.string;
-  t.like(string.parse('"foo bar"'), { status: true, value: 'foo bar' });
-});
-
-test('language.string recognizes phrases with escaped quotes', (t) => {
-  const string = new Parser().language.string;
-  t.like(string.parse(String.raw`"\""`), { status: true, value: '"' });
-});
-
-test('language.string recognizes phrases with escaped backslashes', (t) => {
-  const { string } = new Parser().language;
-  t.like(string.parse(String.raw`"\\"`), { status: true, value: '\\' });
-});
-
-test('language.string unescapes other escape sequences', (t) => {
-  const { string } = new Parser().language;
-  t.like(string.parse(String.raw`"\a"`), { status: true, value: 'a' });
-  t.like(string.parse(String.raw`"\b"`), { status: true, value: 'b' });
-});
-
-test('language.term recognizes terms', (t) => {
-  const term = new Parser().language.term;
-
-  for (const input of ['foo', 'foo:bar', '>2', 'foo:"bar"']) {
-    t.snapshot(term.parse(input), `\`${input}\` as \`term\``);
-  }
-});
-
-test('language.term does not recognize keywords as lone values or field names', (t) => {
-  const { term } = new Parser().language;
-  t.like(term.parse('not'), { status: false });
-  t.like(term.parse('not:foo'), { status: false });
-});
-
-test('language.negation recognizes negations', (t) => {
-  const negation = new Parser().language.negation;
-
-  for (const input of ['not foo', 'not not foo', 'not"foo"']) {
-    t.snapshot(negation.parse(input), `\`${input}\` as \`negation\``);
-  }
-});
-
-test('language.negation recognizes "nota" as a term, not a negation', (t) => {
-  const negation = new Parser().language.negation;
-  t.like(negation.parse('nota'), {
-    status: true,
-    value: {
-      name: 'Term',
-      field: undefined,
-      operator: undefined,
-      value: 'nota'
+    if (providedTitle === undefined) {
+      return title;
     }
-  });
-});
 
-test('language.conjunction recognizes terms, negations, and conjunctions', (t) => {
-  const { conjunction } = new Parser().language;
-
-  for (const input of ['foo:"bar"', 'not foo', 'not foo and not bar']) {
-    t.snapshot(conjunction.parse(input), `\`${input}\` as \`conjunction\``);
+    return `${providedTitle}: ${title}`;
   }
 });
 
-test('language.conjunction recognizes lists of terms', (t) => {
-  const { conjunction } = new Parser().language;
-  t.snapshot(conjunction.parse('a b'), `'a b' as conjunction`);
-});
+const initialNTMacro = test.macro({
+  exec(t, nonterminal, input) {
+    t.snapshot(
+      new Parser().language[nonterminal].skip(parsimmon.all).parse(input),
+      `${nonterminal}: "${jsStringEscape(input)}"`
+    );
+  },
+  title(providedTitle, nonterminal, input) {
+    const title = `initial ${nonterminal}: "${jsStringEscape(input)}"`;
 
-test('language.conjunction lists have higher precedence than "or"', (t) => {
-  const { disjunction } = new Parser().language;
-  t.snapshot(disjunction.parse('a or b c'), `'a or b c' as disjunction`);
-});
+    if (providedTitle === undefined) {
+      return title;
+    }
 
-test('language.disjunction recognizes terms, disjunctions', (t) => {
-  const { disjunction } = new Parser().language;
-
-  for (const input of ['foo:"bar"', 'a or b']) {
-    t.snapshot(disjunction.parse(input), `'${input}' as disjunction`);
+    return `${providedTitle}: ${title}`;
   }
 });
 
-test('language.disjunction places "and" at higher precedence than "or"', (t) => {
-  const disjunction = new Parser().language.disjunction;
-  t.snapshot(
-    disjunction.parse('not a or b and c'),
-    `'not a or b and c' as disjunction`
-  );
-});
+const macro = test.macro({
+  exec(t, input) {
+    t.snapshot(new Parser().parse(input), `"${jsStringEscape(input)}"`);
+  },
+  title(providedTitle, input) {
+    if (providedTitle === undefined) {
+      providedTitle = '';
+    } else {
+      providedTitle += ': ';
+    }
 
-test('language.parenthetical recognizes parenthetical expressions', (t) => {
-  const { parenthetical } = new Parser().language;
-  t.snapshot(parenthetical.parse('(a b)'), `'(a b)' as parenthetical`);
-});
-
-test('language.parenthetical has higher precedence than "and"', (t) => {
-  const { conjunction } = new Parser().language;
-  t.snapshot(
-    conjunction.parse('(a or b) and c'),
-    `'(a or b) and c' as conjunction`
-  );
-});
-
-test('empty expressions and queries', (t) => {
-  const { expression, query } = new Parser().language;
-  t.like(expression.parse(''), { status: false });
-  t.snapshot(query.parse(''));
-  t.snapshot(expression.parse('()'));
-  t.snapshot(expression.parse('not ()'));
-});
-
-test("strange/invalid terms don't cause fatal errors", (t) => {
-  const { term, expression } = new Parser().language;
-
-  t.snapshot(term.parse('>'), `'>' as term`);
-
-  for (const input of ['foo>>bar', 'foo: bar', '::bar']) {
-    t.snapshot(expression.parse(input), `'${input}' as expression`);
+    return `${providedTitle}"${jsStringEscape(input)}"`;
   }
 });
 
-test("malformed conjunctions don't cause fatal errors", (t) => {
-  const { conjunction } = new Parser().language;
+test(nonterminalMacro, 'operator', '>=');
+test(nonterminalMacro, 'operator', '=');
+test(nonterminalMacro, 'word', 'foo');
 
-  for (const input of ['and', 'foo and ', 'and bar']) {
-    t.snapshot(conjunction.parse(input), `'${input}' as conjunction`);
-  }
-});
+test(initialNTMacro, 'word', 'foo=');
+test(initialNTMacro, 'word', 'foo"bar"');
+test(initialNTMacro, 'word', 'foo(bar)');
+test(initialNTMacro, 'word', 'foo>=');
 
-test("malformed disjunctions don't cause fatal errors", (t) => {
-  const { disjunction } = new Parser().language;
+test(nonterminalMacro, 'word', '>');
+test(nonterminalMacro, 'word', '"foo"');
+test(nonterminalMacro, 'word', '');
+test(nonterminalMacro, 'word', 'foo=');
 
-  for (const input of ['or', 'foo or', 'or bar']) {
-    t.snapshot(disjunction.parse(input), `'${input}' as disjunction`);
-  }
-});
+test(nonterminalMacro, 'string', '"foo bar"');
+test(nonterminalMacro, 'string', String.raw`"\""`);
+test(nonterminalMacro, 'string', String.raw`"\\"`);
+test(nonterminalMacro, 'string', String.raw`"\a"`);
+test(nonterminalMacro, 'string', String.raw`"\b"`);
 
-test("malformed negations don't cause fatal errors", (t) => {
-  const { negation } = new Parser().language;
-  t.snapshot(negation.parse('not'), `'not' as negation`);
-});
+test(nonterminalMacro, 'term', 'foo');
+test(nonterminalMacro, 'term', 'foo:bar');
+test(nonterminalMacro, 'term', '>2');
+test(nonterminalMacro, 'term', 'foo:"bar"');
+test(nonterminalMacro, 'term', 'not');
+test(nonterminalMacro, 'term', 'not:foo');
 
-test("surrounding whitespace doesn't break parsers", (t) => {
-  const { query } = new Parser().language;
-  t.like(query.parse(' foo '), { status: true });
-  t.like(query.parse(' not foo '), { status: true });
-  t.like(query.parse('( foo )'), { status: true });
-  t.like(query.parse(' ( foo ) '), { status: true });
-});
+test(nonterminalMacro, 'negation', 'not foo');
+test(nonterminalMacro, 'negation', 'not not foo');
+test(nonterminalMacro, 'negation', 'not"foo"');
+test(nonterminalMacro, 'negation', 'nota');
+
+test(nonterminalMacro, 'conjunction', 'foo:"bar"');
+test(nonterminalMacro, 'conjunction', 'not foo');
+test(nonterminalMacro, 'conjunction', 'not foo and not bar');
+
+test(nonterminalMacro, 'conjunction', 'a b');
+
+test(nonterminalMacro, 'disjunction', 'a or b c');
+
+test(nonterminalMacro, 'disjunction', 'foo:"bar"');
+test(nonterminalMacro, 'disjunction', 'a or b');
+test(nonterminalMacro, 'disjunction', 'not a or b and c');
+
+test(nonterminalMacro, 'parenthetical', '(a b)');
+test(nonterminalMacro, 'parenthetical', '(a or b) and c');
+
+test(macro, '>');
+
+test(macro, 'foo>>bar');
+test(macro, 'foo: bar');
+test(macro, '::bar');
+
+test(macro, 'and');
+test(macro, 'foo and ');
+test(macro, 'and bar');
+
+test(macro, 'or');
+test(macro, 'foo or');
+test(macro, 'or bar');
+
+test(macro, 'not');
+
+test(macro, ' foo ');
+test(macro, ' not foo ');
+test(macro, '( foo )');
+test(macro, ' ( foo ) ');
