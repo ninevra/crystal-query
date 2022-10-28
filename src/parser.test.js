@@ -32,25 +32,25 @@ test('language.word does not recognize non-words', (t) => {
   t.false(word.parse('foo=').status);
 });
 
-test('language.quoted recognizes quoted phrases', (t) => {
-  const quoted = new Parser().language.quoted;
-  t.like(quoted.parse('"foo bar"'), { status: true, value: 'foo bar' });
+test('language.string recognizes string phrases', (t) => {
+  const string = new Parser().language.string;
+  t.like(string.parse('"foo bar"'), { status: true, value: 'foo bar' });
 });
 
-test('language.quoted recognizes phrases with escaped quotes', (t) => {
-  const quoted = new Parser().language.quoted;
-  t.like(quoted.parse(String.raw`"\""`), { status: true, value: '"' });
+test('language.string recognizes phrases with escaped quotes', (t) => {
+  const string = new Parser().language.string;
+  t.like(string.parse(String.raw`"\""`), { status: true, value: '"' });
 });
 
-test('language.quoted recognizes phrases with escaped backslashes', (t) => {
-  const { quoted } = new Parser().language;
-  t.like(quoted.parse(String.raw`"\\"`), { status: true, value: '\\' });
+test('language.string recognizes phrases with escaped backslashes', (t) => {
+  const { string } = new Parser().language;
+  t.like(string.parse(String.raw`"\\"`), { status: true, value: '\\' });
 });
 
-test('language.quoted unescapes other escape sequences', (t) => {
-  const { quoted } = new Parser().language;
-  t.like(quoted.parse(String.raw`"\a"`), { status: true, value: 'a' });
-  t.like(quoted.parse(String.raw`"\b"`), { status: true, value: 'b' });
+test('language.string unescapes other escape sequences', (t) => {
+  const { string } = new Parser().language;
+  t.like(string.parse(String.raw`"\a"`), { status: true, value: 'a' });
+  t.like(string.parse(String.raw`"\b"`), { status: true, value: 'b' });
 });
 
 test('language.term recognizes terms', (t) => {
@@ -138,7 +138,7 @@ test('language.parenthetical has higher precedence than "and"', (t) => {
 test('empty expressions and queries', (t) => {
   const { expression, query } = new Parser().language;
   t.like(expression.parse(''), { status: false });
-  t.like(query.parse(''), { status: true, value: undefined });
+  t.snapshot(query.parse(''));
   t.snapshot(expression.parse('()'));
   t.snapshot(expression.parse('not ()'));
 });
@@ -175,9 +175,9 @@ test("malformed negations don't cause fatal errors", (t) => {
 });
 
 test("surrounding whitespace doesn't break parsers", (t) => {
-  const { expression } = new Parser().language;
-  t.like(expression.parse(' foo '), { status: true });
-  t.like(expression.parse(' not foo '), { status: true });
-  t.like(expression.parse('( foo )'), { status: true });
-  t.like(expression.parse(' ( foo ) '), { status: true });
+  const { query } = new Parser().language;
+  t.like(query.parse(' foo '), { status: true });
+  t.like(query.parse(' not foo '), { status: true });
+  t.like(query.parse('( foo )'), { status: true });
+  t.like(query.parse(' ( foo ) '), { status: true });
 });
