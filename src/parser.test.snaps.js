@@ -2,66 +2,70 @@ import test from 'ava';
 import jsStringEscape from 'js-string-escape';
 import { Parser } from './parser.js';
 
-const macro = test.macro((t, inputs) => {
-  for (const input of inputs) {
+const macro = test.macro({
+  exec(t, input) {
     t.snapshot(new Parser().parse(input), `"${jsStringEscape(input)}"`);
+  },
+  title(providedTitle, input) {
+    if (providedTitle === undefined) {
+      providedTitle = '';
+    } else {
+      providedTitle += ': ';
+    }
+
+    return `${providedTitle}"${jsStringEscape(input)}"`;
   }
 });
 
-test('fields', macro, [
-  'value',
-  '"value"',
-  '42',
-  'field:',
-  'field:value',
-  ':value',
-  ':',
-  'a:b:c',
-  'a:b:c:',
-  'a: b: c:'
-]);
+test(macro, 'value');
+test(macro, '"value"');
+test(macro, '42');
+test(macro, 'field:');
+test(macro, 'field:value');
+test(macro, ':value');
+test(macro, ':');
+test(macro, 'a:b:c');
+test(macro, 'a:b:c:');
+test(macro, 'a: b: c:');
 
-test('fields and keywords', macro, [
-  'field:and',
-  'field:"and"',
-  'and:value',
-  'and"value"',
-  'field:not',
-  'field:"not"',
-  'not:value',
-  'not"value"'
-]);
+test(macro, 'field:and');
+test(macro, 'field:"and"');
+test(macro, 'and:value');
+test(macro, 'and"value"');
+test(macro, 'field:not');
+test(macro, 'field:"not"');
+test(macro, 'not:value');
+test(macro, 'not"value"');
 
-test('parens', macro, [
-  '(a:one b:two)',
-  '()',
-  '(',
-  ')',
-  '(a:one',
-  'a:one)',
-  '(and)',
-  '(or)',
-  '(not)'
-]);
+test(macro, '(a:one b:two)');
+test(macro, '()');
+test(macro, '(');
+test(macro, ')');
+test(macro, '(a:one');
+test(macro, 'a:one)');
+test(macro, '(and)');
+test(macro, '(or)');
+test(macro, '(not)');
 
-test('expressions', macro, [
-  'a:one or b:two and not c:three',
-  '(a:one or (b:two)) and not c:three',
-  'not not a:one and b:two'
-]);
+test(macro, 'a:one or b:two and not c:three');
+test(macro, '(a:one or (b:two)) and not c:three');
+test(macro, 'not not a:one and b:two');
 
-test('whitespace', macro, ['', '   ', '\t ', ' a:one', 'a:one ', ' a:one ']);
+test(macro, '');
+test('spaces', macro, '   ');
+test('tab character', macro, '\t ');
+test(macro, ' a:one');
+test(macro, 'a:one ');
+test(macro, ' a:one ');
 
-test('strings', macro, [
-  '"foo:bar"',
-  '""',
-  '" "',
-  '"(a:one and two) or not three"',
-  '"""',
-  '""""',
-  'a:"""""',
-  String.raw`"\""`,
-  "''",
-  `'""'`,
-  String.raw`"\\""`
-]);
+test(macro, '"foo:bar"');
+test(macro, '""');
+test(macro, '" "');
+test(macro, '"(a:one and two) or not three"');
+test(macro, '"""');
+test(macro, '""""');
+test(macro, 'a:"""""');
+test(macro, String.raw`"\""`);
+test(macro, "''");
+test(macro, `'""'`);
+test(macro, String.raw`"\\""`);
