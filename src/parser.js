@@ -50,15 +50,55 @@ export class Parser {
       word: () => regexp(/[^:<>="()\s]+/),
       identifier: (l) => l.word.assert((word) => !l.keyword.parse(word).status),
       field: (l) => l.identifier,
-      value: (l) => alt(l.string, l.identifier),
+      simpleValue: (l) => alt(l.string, l.identifier),
       nothing: () => succeed(undefined),
+      valueParen: (l) =>
+        seqObj(
+          string('('),
+          optWhitespace,
+          ['expression', l.valueExpr],
+          optWhitespace,
+          string(')')
+        ).thru(node('Parenthetical')),
+      valueBasic: (l) => alt(l.valueParen, l.simpleValue),
+      valueNot: (l) =>
+        alt(
+          seqObj(l.not, optWhitespace, [
+            'expression',
+            alt(l.valueNot, l.nothing)
+          ]).thru(node('Not')),
+          l.valueBasic
+        ),
+      valueAnd: (l) =>
+        alt(
+          seqObj(
+            ['left', alt(l.valueNot, l.nothing)],
+            optWhitespace,
+            l.and,
+            optWhitespace,
+            ['right', alt(l.valueAnd, l.nothing)]
+          ).thru(node('And')),
+          l.valueNot
+        ),
+      valueOr: (l) =>
+        alt(
+          seqObj(
+            ['left', alt(l.valueAnd, l.nothing)],
+            optWhitespace,
+            l.or,
+            optWhitespace,
+            ['right', alt(l.valueOr, l.nothing)]
+          ).thru(node('Or')),
+          l.valueAnd
+        ),
+      valueExpr: (l) => l.valueOr,
       term: (l) =>
         alt(
-          seq(l.field, l.operator, l.value),
-          seq(l.nothing, l.operator, l.value),
+          seq(l.field, l.operator, l.valueBasic),
+          seq(l.nothing, l.operator, l.valueBasic),
           seq(l.field, l.operator, l.nothing),
           seq(l.nothing, l.operator, l.nothing),
-          seq(l.nothing, l.nothing, l.value)
+          seq(l.nothing, l.nothing, l.simpleValue)
         )
           .map(([field, operator, value]) => ({ field, operator, value }))
           .thru(node('Term')),

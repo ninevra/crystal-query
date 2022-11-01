@@ -174,3 +174,7 @@ test(macro, String.raw`"\""`);
 test(macro, "''");
 test(macro, `'""'`);
 test(macro, String.raw`"\\""`);
+
+test(macro, 'foo:(one and not two or three)');
+test(macro, 'foo:(one two three)');
+test(macro, 'foo:()');
