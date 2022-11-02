@@ -78,6 +78,10 @@ export class Parser {
             optWhitespace,
             ['right', alt(l.valueAnd, l.nothing)]
           ).thru(node('And')),
+          seqObj(['left', l.valueNot], optWhitespace, [
+            'right',
+            l.valueAnd
+          ]).thru(node('And')),
           l.valueNot
         ),
       valueOr: (l) =>
