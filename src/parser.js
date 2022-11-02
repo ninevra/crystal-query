@@ -37,6 +37,14 @@ function collapseUnary(node) {
   return node;
 }
 
+function collapseTerm(term) {
+  if ((term.field ?? term.operator ?? term.value) === undefined) {
+    return undefined;
+  }
+
+  return term;
+}
+
 export class Parser {
   constructor() {
     this.language = parsimmon.createLanguage({
@@ -59,14 +67,18 @@ export class Parser {
           ['expression', l.valueExpr],
           optWhitespace,
           string(')')
-        ).thru(node('Parenthetical')),
+        )
+          .thru(node('Parenthetical'))
+          .map((node) => collapseUnary(node)),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
         alt(
           seqObj(l.not, optWhitespace, [
             'expression',
             alt(l.valueNot, l.nothing)
-          ]).thru(node('Not')),
+          ])
+            .thru(node('Not'))
+            .map((node) => collapseUnary(node)),
           l.valueBasic
         ),
       valueAnd: (l) =>
@@ -77,11 +89,12 @@ export class Parser {
             l.and,
             optWhitespace,
             ['right', alt(l.valueAnd, l.nothing)]
-          ).thru(node('And')),
-          seqObj(['left', l.valueNot], optWhitespace, [
-            'right',
-            l.valueAnd
-          ]).thru(node('And')),
+          )
+            .thru(node('And'))
+            .map((node) => collapseBinary(node)),
+          seqObj(['left', l.valueNot], optWhitespace, ['right', l.valueAnd])
+            .thru(node('And'))
+            .map((node) => collapseBinary(node)),
           l.valueNot
         ),
       valueOr: (l) =>
@@ -92,7 +105,9 @@ export class Parser {
             l.or,
             optWhitespace,
             ['right', alt(l.valueOr, l.nothing)]
-          ).thru(node('Or')),
+          )
+            .thru(node('Or'))
+            .map((node) => collapseBinary(node)),
           l.valueAnd
         ),
       valueExpr: (l) => l.valueOr,
@@ -102,10 +117,11 @@ export class Parser {
           seq(l.nothing, l.operator, l.valueBasic),
           seq(l.field, l.operator, l.nothing),
           seq(l.nothing, l.operator, l.nothing),
-          seq(l.nothing, l.nothing, l.simpleValue)
+          seq(l.nothing, l.nothing, l.valueBasic)
         )
           .map(([field, operator, value]) => ({ field, operator, value }))
-          .thru(node('Term')),
+          .thru(node('Term'))
+          .map((node) => collapseTerm(node)),
       parenthetical: (l) =>
         seqObj(
           string('('),
