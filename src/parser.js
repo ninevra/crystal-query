@@ -22,6 +22,7 @@ function node(name) {
     }));
 }
 
+/* eslint-disable no-unused-vars */
 function collapseBinary(node) {
   if (node.left === undefined) {
     return node.right;
@@ -49,6 +50,7 @@ function collapseTerm(term) {
 
   return term;
 }
+/* eslint-enable no-unused-vars */
 
 function balanceParens(string) {
   let missingLeft = 0;
@@ -83,6 +85,7 @@ export class Parser {
       field: (l) => l.identifier,
       simpleValue: (l) => alt(l.string, l.identifier),
       nothing: () => succeed(undefined),
+      lparen: () => string('(').thru(node),
       valueParen: (l) =>
         seqObj(
           string('('),
@@ -90,18 +93,14 @@ export class Parser {
           ['expression', l.valueExpr],
           optWhitespace,
           string(')')
-        )
-          .thru(node('Parenthetical'))
-          .map((node) => collapseUnary(node)),
+        ).thru(node('Parenthetical')),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
         alt(
           seqObj(l.not, optWhitespace, [
             'expression',
             alt(l.valueNot, l.nothing)
-          ])
-            .thru(node('Not'))
-            .map((node) => collapseUnary(node)),
+          ]).thru(node('Not')),
           l.valueBasic
         ),
       valueAnd: (l) =>
@@ -112,12 +111,11 @@ export class Parser {
             l.and,
             optWhitespace,
             ['right', alt(l.valueAnd, l.nothing)]
-          )
-            .thru(node('And'))
-            .map((node) => collapseBinary(node)),
-          seqObj(['left', l.valueNot], optWhitespace, ['right', l.valueAnd])
-            .thru(node('And'))
-            .map((node) => collapseBinary(node)),
+          ).thru(node('And')),
+          seqObj(['left', l.valueNot], optWhitespace, [
+            'right',
+            l.valueAnd
+          ]).thru(node('And')),
           l.valueNot
         ),
       valueOr: (l) =>
@@ -128,9 +126,7 @@ export class Parser {
             l.or,
             optWhitespace,
             ['right', alt(l.valueOr, l.nothing)]
-          )
-            .thru(node('Or'))
-            .map((node) => collapseBinary(node)),
+          ).thru(node('Or')),
           l.valueAnd
         ),
       valueExpr: (l) => l.valueOr,
@@ -143,8 +139,7 @@ export class Parser {
           seq(l.nothing, l.nothing, l.valueBasic)
         )
           .map(([field, operator, value]) => ({ field, operator, value }))
-          .thru(node('Term'))
-          .map((node) => collapseTerm(node)),
+          .thru(node('Term')),
       parenthetical: (l) =>
         seqObj(
           string('('),
@@ -152,15 +147,13 @@ export class Parser {
           ['expression', l.optExpression],
           optWhitespace,
           string(')')
-        )
-          .thru(node('Parenthetical'))
-          .map((node) => collapseUnary(node)),
+        ).thru(node('Parenthetical')),
       basic: (l) => alt(l.term, l.parenthetical),
       negation: (l) =>
         alt(
-          seqObj(l.not, optWhitespace, ['expression', l.optNegation])
-            .thru(node('Not'))
-            .map((node) => collapseUnary(node)),
+          seqObj(l.not, optWhitespace, ['expression', l.optNegation]).thru(
+            node('Not')
+          ),
           l.basic
         ),
       optNegation: (l) => alt(l.negation, l.nothing),
@@ -169,9 +162,7 @@ export class Parser {
           seqObj(['left', l.optNegation], optWhitespace, l.and, optWhitespace, [
             'right',
             l.optConjunction
-          ])
-            .thru(node('And'))
-            .map((node) => collapseBinary(node)),
+          ]).thru(node('And')),
           seqObj(['left', l.negation], optWhitespace, [
             'right',
             l.conjunction
@@ -187,9 +178,7 @@ export class Parser {
             l.or,
             optWhitespace,
             ['right', l.optDisjunction]
-          )
-            .thru(node('Or'))
-            .map((node) => collapseBinary(node)),
+          ).thru(node('Or')),
           l.conjunction
         ),
       optDisjunction: (l) => alt(l.disjunction, l.nothing),
