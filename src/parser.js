@@ -59,22 +59,55 @@ function collapseTerm(term) {
 }
 /* eslint-enable no-unused-vars */
 
-function balanceParens(string) {
-  let missingLeft = 0;
-  let missingRight = 0;
+function missingParens(string) {
+  let left = 0;
+  let right = 0;
   for (const char of string) {
     if (char === ')') {
-      if (missingRight > 0) {
-        missingRight--;
+      if (right > 0) {
+        right--;
       } else {
-        missingLeft++;
+        left++;
       }
     } else if (char === '(') {
-      missingRight++;
+      right++;
     }
   }
 
-  return '('.repeat(missingLeft) + string + ')'.repeat(missingRight);
+  return { left, right };
+}
+
+function balance(string, left, right) {
+  return '('.repeat(left) + string + ')'.repeat(right);
+}
+
+function trimCst(cst, prefixLength, inputLength) {
+  if (cst === undefined) {
+    return undefined;
+  }
+
+  if (cst.end <= prefixLength) {
+    // Node exists wholely in the prefix
+    return undefined;
+  }
+
+  cst.start = Math.max(0, cst.start - prefixLength);
+  cst.end -= prefixLength;
+
+  if (cst.start >= inputLength) {
+    // Node exists wholely in the suffix
+    return undefined;
+  }
+
+  cst.end = Math.min(inputLength, cst.end);
+
+  for (const key of Object.getOwnPropertyNames(cst)) {
+    if (typeof cst[key] === 'object' && cst[key] !== undefined) {
+      cst[key] = trimCst(cst[key], prefixLength, inputLength);
+    }
+  }
+
+  return cst;
 }
 
 export class Parser {
@@ -204,6 +237,13 @@ export class Parser {
   }
 
   parse(input) {
-    return this.language.query.parse(balanceParens(input));
+    const { left, right } = missingParens(input);
+    const balanced = balance(input, left, right);
+    const result = this.language.query.parse(balanced);
+    if (result.status) {
+      result.value = trimCst(result.value, left, input.length);
+    }
+
+    return result;
   }
 }
