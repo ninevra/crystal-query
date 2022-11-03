@@ -14,12 +14,19 @@ const {
 
 function node(name) {
   return (parser) =>
-    parser.node(name).map(({ value, start, end, ...rest }) => ({
-      ...rest,
+    parser.thru(mark).map(({ value, ...rest }) => ({
       ...value,
-      start: start.offset,
-      end: end.offset
+      ...rest,
+      name
     }));
+}
+
+function mark(parser) {
+  return parser.mark().map(({ value, start, end }) => ({
+    value,
+    start: start.offset,
+    end: end.offset
+  }));
 }
 
 /* eslint-disable no-unused-vars */
@@ -73,26 +80,30 @@ function balanceParens(string) {
 export class Parser {
   constructor() {
     this.language = parsimmon.createLanguage({
-      operator: () => alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)),
-      and: (l) => l.word.assert((word) => word === 'and'),
-      or: (l) => l.word.assert((word) => word === 'or'),
-      not: (l) => l.word.assert((word) => word === 'not'),
+      operator: () =>
+        alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(mark),
+      and: (l) => l.word.assert((word) => word === 'and').thru(mark),
+      or: (l) => l.word.assert((word) => word === 'or').thru(mark),
+      not: (l) => l.word.assert((word) => word === 'not').thru(mark),
       keyword: (l) => alt(l.and, l.or, l.not),
       escaped: () => string('\\').then(any),
-      string: (l) => alt(l.escaped, noneOf('"')).many().tie().trim(string('"')),
+      string: (l) =>
+        alt(l.escaped, noneOf('"')).many().tie().trim(string('"')).thru(mark),
       word: () => regexp(/[^:<>="()\s]+/),
-      identifier: (l) => l.word.assert((word) => !l.keyword.parse(word).status),
+      identifier: (l) =>
+        l.word.assert((word) => !l.keyword.parse(word).status).thru(mark),
       field: (l) => l.identifier,
       simpleValue: (l) => alt(l.string, l.identifier),
       nothing: () => succeed(undefined),
-      lparen: () => string('(').thru(node),
+      lparen: () => string('(').thru(mark),
+      rparen: () => string(')').thru(mark),
       valueParen: (l) =>
         seqObj(
-          string('('),
+          l.lparen,
           optWhitespace,
           ['expression', l.valueExpr],
           optWhitespace,
-          string(')')
+          l.rparen
         ).thru(node('Parenthetical')),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
@@ -142,11 +153,11 @@ export class Parser {
           .thru(node('Term')),
       parenthetical: (l) =>
         seqObj(
-          string('('),
+          l.lparen,
           optWhitespace,
           ['expression', l.optExpression],
           optWhitespace,
-          string(')')
+          l.rparen
         ).thru(node('Parenthetical')),
       basic: (l) => alt(l.term, l.parenthetical),
       negation: (l) =>
