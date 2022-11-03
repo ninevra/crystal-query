@@ -45,6 +45,24 @@ function collapseTerm(term) {
   return term;
 }
 
+function balanceParens(string) {
+  let missingLeft = 0;
+  let missingRight = 0;
+  for (const char of string) {
+    if (char === ')') {
+      if (missingRight > 0) {
+        missingRight--;
+      } else {
+        missingLeft++;
+      }
+    } else if (char === '(') {
+      missingRight++;
+    }
+  }
+
+  return '('.repeat(missingLeft) + string + ')'.repeat(missingRight);
+}
+
 export class Parser {
   constructor() {
     this.language = parsimmon.createLanguage({
@@ -177,6 +195,6 @@ export class Parser {
   }
 
   parse(input) {
-    return this.language.query.parse(input);
+    return this.language.query.parse(balanceParens(input));
   }
 }
