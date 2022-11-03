@@ -14,7 +14,12 @@ const {
 
 function node(name) {
   return (parser) =>
-    parser.node(name).map(({ value, ...rest }) => ({ ...rest, ...value }));
+    parser.node(name).map(({ value, start, end, ...rest }) => ({
+      ...rest,
+      ...value,
+      start: start.offset,
+      end: end.offset
+    }));
 }
 
 function collapseBinary(node) {
