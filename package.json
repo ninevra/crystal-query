@@ -23,6 +23,7 @@
     "prepublishOnly": "npm run format:check && npm test && npm run build",
     "pretest": "npm run build",
     "test": "npm run lint && c8 ava",
+    "test:fix": "npm run lint:fix && c8 ava",
     "test:debug": "ava debug --break",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
