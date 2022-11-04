@@ -181,3 +181,5 @@ test(macro, 'foo:()');
 test(macro, 'foo:one two bar:three');
 test(macro, 'foo:(one two) bar:three');
 test(macro, 'foo:(one:two)');
+
+test(macro, '"))"');

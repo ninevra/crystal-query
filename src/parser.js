@@ -53,15 +53,42 @@ function collapseTerm(term) {
 function missingParens(string) {
   let left = 0;
   let right = 0;
+  let inString = false;
+  let inEscape = false;
   for (const char of string) {
-    if (char === ')') {
-      if (right > 0) {
-        right--;
-      } else {
-        left++;
+    if (inEscape) {
+      inEscape = false;
+    } else if (inString) {
+      if (char === '"') {
+        inString = false;
+      } else if (char === '\\') {
+        inEscape = true;
       }
-    } else if (char === '(') {
-      right++;
+    } else {
+      switch (char) {
+        case '"': {
+          inString = true;
+
+          break;
+        }
+
+        case ')': {
+          if (right > 0) {
+            right--;
+          } else {
+            left++;
+          }
+
+          break;
+        }
+
+        case '(': {
+          right++;
+
+          break;
+        }
+        // No default
+      }
     }
   }
 
