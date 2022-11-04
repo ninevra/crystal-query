@@ -1,16 +1,7 @@
 import parsimmon from 'parsimmon';
 
-const {
-  seq,
-  seqObj,
-  alt,
-  any,
-  string,
-  regexp,
-  noneOf,
-  optWhitespace,
-  succeed
-} = parsimmon;
+const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
+  parsimmon;
 
 function node(name) {
   return (parser) =>
@@ -119,9 +110,27 @@ export class Parser {
       or: (l) => l.word.assert((word) => word === 'or').thru(mark),
       not: (l) => l.word.assert((word) => word === 'not').thru(mark),
       keyword: (l) => alt(l.and, l.or, l.not),
-      escaped: () => string('\\').then(any),
+      escaped: () =>
+        seq(string('\\'), any).map(([slash, char]) => ({
+          raw: slash + char,
+          value: char
+        })),
+      unescaped: () => regexp(/[^"]+/).map((value) => ({ raw: value, value })),
+      stringContent: (l) =>
+        alt(l.escaped, l.unescaped)
+          .many()
+          .map((parts) => ({
+            raw: parts.map(({ raw }) => raw).join(','),
+            value: parts.map(({ value }) => value).join(',')
+          })),
       string: (l) =>
-        alt(l.escaped, noneOf('"')).many().tie().trim(string('"')).thru(mark),
+        seqObj(
+          ['open', string('"').thru(mark)],
+          ['content', l.stringContent],
+          ['close', string('"').thru(mark)]
+        )
+          .map(({ content, ...rest }) => ({ ...rest, ...content }))
+          .thru(node('String')),
       word: () => regexp(/[^:<>="()\s]+/),
       identifier: (l) =>
         l.word.assert((word) => !l.keyword.parse(word).status).thru(mark),
