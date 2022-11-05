@@ -184,3 +184,7 @@ test(macro, 'foo:(one:two)');
 
 test(macro, '"))"');
 test(macro, '"(("');
+
+test(macro, '"');
+test(macro, '"\\');
+test(macro, '"\\"');
