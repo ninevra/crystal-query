@@ -50,7 +50,7 @@ function collapseTerm(term) {
 }
 /* eslint-enable no-unused-vars */
 
-function missingParens(string) {
+function missingDelimiters(string) {
   let left = 0;
   let right = 0;
   let state = 'default';
@@ -84,11 +84,17 @@ function missingParens(string) {
     }
   }
 
-  return { left, right };
+  const escape = state === 'escape';
+  const quote = escape || state === 'string';
+
+  return { left, right, escape, quote };
 }
 
-function balance(string, left, right) {
-  return '('.repeat(left) + string + ')'.repeat(right);
+function repairDelimiters(string, { left, right, escape, quote }) {
+  const prefix = '('.repeat(left);
+  const suffix = (escape ? '\\' : '') + (quote ? '"' : '') + ')'.repeat(right);
+  const balanced = prefix + string + suffix;
+  return { prefix, suffix, balanced };
 }
 
 function trimCst(cst, prefixLength, inputLength) {
@@ -265,11 +271,11 @@ export class Parser {
   }
 
   parse(input) {
-    const { left, right } = missingParens(input);
-    const balanced = balance(input, left, right);
+    const missing = missingDelimiters(input);
+    const { balanced, prefix } = repairDelimiters(input, missing);
     const result = this.language.query.parse(balanced);
     if (result.status) {
-      result.value = trimCst(result.value, left, input.length);
+      result.value = trimCst(result.value, prefix.length, input.length);
     }
 
     return result;
