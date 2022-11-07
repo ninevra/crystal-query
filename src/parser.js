@@ -1,7 +1,15 @@
 import parsimmon from 'parsimmon';
 
-const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
-  parsimmon;
+const {
+  seq,
+  seqObj,
+  alt,
+  any,
+  string,
+  regexp,
+  optWhitespace: _,
+  succeed
+} = parsimmon;
 
 function node(name) {
   return (parser) =>
@@ -165,17 +173,14 @@ export class Parser {
       lparen: () => string('(').thru(mark),
       rparen: () => string(')').thru(mark),
       valueParen: (l) =>
-        seqObj(
-          ['lparen', l.lparen],
-          optWhitespace,
-          ['expression', l.valueExpr],
-          optWhitespace,
-          ['rparen', l.rparen]
-        ).thru(node('Parenthetical')),
+        seqObj(['lparen', l.lparen], _, ['expression', l.valueExpr], _, [
+          'rparen',
+          l.rparen
+        ]).thru(node('Parenthetical')),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
         alt(
-          seqObj(['not', l.not], optWhitespace, [
+          seqObj(['not', l.not], _, [
             'expression',
             alt(l.valueNot, l.nothing)
           ]).thru(node('Not')),
@@ -183,28 +188,21 @@ export class Parser {
         ),
       valueAnd: (l) =>
         alt(
-          seqObj(
-            ['left', alt(l.valueNot, l.nothing)],
-            optWhitespace,
-            ['and', l.and],
-            optWhitespace,
-            ['right', alt(l.valueAnd, l.nothing)]
-          ).thru(node('And')),
-          seqObj(['left', l.valueNot], optWhitespace, [
+          seqObj(['left', alt(l.valueNot, l.nothing)], _, ['and', l.and], _, [
             'right',
-            l.valueAnd
+            alt(l.valueAnd, l.nothing)
           ]).thru(node('And')),
+          seqObj(['left', l.valueNot], _, ['right', l.valueAnd]).thru(
+            node('And')
+          ),
           l.valueNot
         ),
       valueOr: (l) =>
         alt(
-          seqObj(
-            ['left', alt(l.valueAnd, l.nothing)],
-            optWhitespace,
-            ['or', l.or],
-            optWhitespace,
-            ['right', alt(l.valueOr, l.nothing)]
-          ).thru(node('Or')),
+          seqObj(['left', alt(l.valueAnd, l.nothing)], _, ['or', l.or], _, [
+            'right',
+            alt(l.valueOr, l.nothing)
+          ]).thru(node('Or')),
           l.valueAnd
         ),
       valueExpr: (l) => l.valueOr,
@@ -219,54 +217,43 @@ export class Parser {
           .map(([field, operator, value]) => ({ field, operator, value }))
           .thru(node('Term')),
       parenthetical: (l) =>
-        seqObj(
-          ['lparen', l.lparen],
-          optWhitespace,
-          ['expression', l.optExpression],
-          optWhitespace,
-          ['rparen', l.rparen]
-        ).thru(node('Parenthetical')),
+        seqObj(['lparen', l.lparen], _, ['expression', l.optExpression], _, [
+          'rparen',
+          l.rparen
+        ]).thru(node('Parenthetical')),
       basic: (l) => alt(l.term, l.parenthetical),
       negation: (l) =>
         alt(
-          seqObj(['not', l.not], optWhitespace, [
-            'expression',
-            l.optNegation
-          ]).thru(node('Not')),
+          seqObj(['not', l.not], _, ['expression', l.optNegation]).thru(
+            node('Not')
+          ),
           l.basic
         ),
       optNegation: (l) => alt(l.negation, l.nothing),
       conjunction: (l) =>
         alt(
-          seqObj(
-            ['left', l.optNegation],
-            optWhitespace,
-            ['and', l.and],
-            optWhitespace,
-            ['right', l.optConjunction]
-          ).thru(node('And')),
-          seqObj(['left', l.negation], optWhitespace, [
+          seqObj(['left', l.optNegation], _, ['and', l.and], _, [
             'right',
-            l.conjunction
+            l.optConjunction
           ]).thru(node('And')),
+          seqObj(['left', l.negation], _, ['right', l.conjunction]).thru(
+            node('And')
+          ),
           l.negation
         ),
       optConjunction: (l) => alt(l.conjunction, l.nothing),
       disjunction: (l) =>
         alt(
-          seqObj(
-            ['left', l.optConjunction],
-            optWhitespace,
-            ['or', l.or],
-            optWhitespace,
-            ['right', l.optDisjunction]
-          ).thru(node('Or')),
+          seqObj(['left', l.optConjunction], _, ['or', l.or], _, [
+            'right',
+            l.optDisjunction
+          ]).thru(node('Or')),
           l.conjunction
         ),
       optDisjunction: (l) => alt(l.disjunction, l.nothing),
       expression: (l) => l.disjunction,
       optExpression: (l) => alt(l.expression, l.nothing),
-      query: (l) => l.optExpression.trim(optWhitespace)
+      query: (l) => l.optExpression.trim(_)
     });
   }
 
