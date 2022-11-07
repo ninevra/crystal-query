@@ -1,15 +1,9 @@
 import parsimmon from 'parsimmon';
 
-const {
-  seq,
-  seqObj,
-  alt,
-  any,
-  string,
-  regexp,
-  optWhitespace: _,
-  succeed
-} = parsimmon;
+const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
+  parsimmon;
+
+const _ = optWhitespace.thru(mark);
 
 function node(name) {
   return (parser) =>
@@ -125,13 +119,37 @@ function trimCst(cst, prefixLength, inputLength) {
 
   cst.end = Math.min(inputLength, cst.end);
 
-  for (const key of Object.getOwnPropertyNames(cst)) {
-    if (typeof cst[key] === 'object' && cst[key] !== undefined) {
-      cst[key] = trimCst(cst[key], prefixLength, inputLength);
+  if (cst.children) {
+    cst.children = cst.children.map((node) =>
+      trimCst(node, prefixLength, inputLength)
+    );
+
+    if (cst.name === 'And') {
+      cst.left = cst.children[0];
+      cst.and = cst.children[2];
+      cst.right = cst.children[4];
+    }
+  } else {
+    for (const key of Object.getOwnPropertyNames(cst)) {
+      if (typeof cst[key] === 'object' && cst[key] !== undefined) {
+        cst[key] = trimCst(cst[key], prefixLength, inputLength);
+      }
     }
   }
 
   return cst;
+}
+
+function nodeAnd(parser) {
+  return parser.mark().map(({ start, end, value }) => ({
+    start: start.offset,
+    end: end.offset,
+    name: 'And',
+    children: value,
+    left: value[0],
+    and: value[2],
+    right: value[4]
+  }));
 }
 
 export class Parser {
@@ -188,13 +206,14 @@ export class Parser {
         ),
       valueAnd: (l) =>
         alt(
-          seqObj(['left', alt(l.valueNot, l.nothing)], _, ['and', l.and], _, [
-            'right',
+          seq(
+            alt(l.valueNot, l.nothing),
+            _,
+            l.and,
+            _,
             alt(l.valueAnd, l.nothing)
-          ]).thru(node('And')),
-          seqObj(['left', l.valueNot], _, ['right', l.valueAnd]).thru(
-            node('And')
-          ),
+          ).thru(nodeAnd),
+          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(nodeAnd),
           l.valueNot
         ),
       valueOr: (l) =>
@@ -232,13 +251,8 @@ export class Parser {
       optNegation: (l) => alt(l.negation, l.nothing),
       conjunction: (l) =>
         alt(
-          seqObj(['left', l.optNegation], _, ['and', l.and], _, [
-            'right',
-            l.optConjunction
-          ]).thru(node('And')),
-          seqObj(['left', l.negation], _, ['right', l.conjunction]).thru(
-            node('And')
-          ),
+          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(nodeAnd),
+          seq(l.negation, _, l.nothing, _, l.conjunction).thru(nodeAnd),
           l.negation
         ),
       optConjunction: (l) => alt(l.conjunction, l.nothing),
