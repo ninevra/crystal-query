@@ -51,7 +51,7 @@ export class Or extends Binary {
   }
 }
 
-class Unary {
+class Unary extends Node {
   get expression() {
     return this.children[2];
   }

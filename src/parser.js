@@ -1,6 +1,6 @@
 import parsimmon from 'parsimmon';
 
-import { And } from './nodes.js';
+import { And, Paren } from './nodes.js';
 
 const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
   parsimmon;
@@ -182,10 +182,7 @@ export class Parser {
       lparen: () => string('(').thru(mark),
       rparen: () => string(')').thru(mark),
       valueParen: (l) =>
-        seqObj(['lparen', l.lparen], _, ['expression', l.valueExpr], _, [
-          'rparen',
-          l.rparen
-        ]).thru(node('Parenthetical')),
+        seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(node2(Paren)),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
         alt(
@@ -227,10 +224,7 @@ export class Parser {
           .map(([field, operator, value]) => ({ field, operator, value }))
           .thru(node('Term')),
       parenthetical: (l) =>
-        seqObj(['lparen', l.lparen], _, ['expression', l.optExpression], _, [
-          'rparen',
-          l.rparen
-        ]).thru(node('Parenthetical')),
+        seq(l.lparen, _, l.optExpression, _, l.rparen).thru(node2(Paren)),
       basic: (l) => alt(l.term, l.parenthetical),
       negation: (l) =>
         alt(
