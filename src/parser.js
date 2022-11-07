@@ -1,5 +1,7 @@
 import parsimmon from 'parsimmon';
 
+import { And } from './nodes.js';
+
 const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
   parsimmon;
 
@@ -12,6 +14,13 @@ function node(name) {
       ...rest,
       name
     }));
+}
+
+function node2(Type) {
+  return (parser) =>
+    parser
+      .thru(mark)
+      .map(({ value, ...rest }) => new Type({ children: value, ...rest }));
 }
 
 function mark(parser) {
@@ -123,12 +132,6 @@ function trimCst(cst, prefixLength, inputLength) {
     cst.children = cst.children.map((node) =>
       trimCst(node, prefixLength, inputLength)
     );
-
-    if (cst.name === 'And') {
-      cst.left = cst.children[0];
-      cst.and = cst.children[2];
-      cst.right = cst.children[4];
-    }
   } else {
     for (const key of Object.getOwnPropertyNames(cst)) {
       if (typeof cst[key] === 'object' && cst[key] !== undefined) {
@@ -138,18 +141,6 @@ function trimCst(cst, prefixLength, inputLength) {
   }
 
   return cst;
-}
-
-function nodeAnd(parser) {
-  return parser.mark().map(({ start, end, value }) => ({
-    start: start.offset,
-    end: end.offset,
-    name: 'And',
-    children: value,
-    left: value[0],
-    and: value[2],
-    right: value[4]
-  }));
 }
 
 export class Parser {
@@ -212,8 +203,8 @@ export class Parser {
             l.and,
             _,
             alt(l.valueAnd, l.nothing)
-          ).thru(nodeAnd),
-          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(nodeAnd),
+          ).thru(node2(And)),
+          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(node2(And)),
           l.valueNot
         ),
       valueOr: (l) =>
@@ -251,8 +242,8 @@ export class Parser {
       optNegation: (l) => alt(l.negation, l.nothing),
       conjunction: (l) =>
         alt(
-          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(nodeAnd),
-          seq(l.negation, _, l.nothing, _, l.conjunction).thru(nodeAnd),
+          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(node2(And)),
+          seq(l.negation, _, l.nothing, _, l.conjunction).thru(node2(And)),
           l.negation
         ),
       optConjunction: (l) => alt(l.conjunction, l.nothing),
