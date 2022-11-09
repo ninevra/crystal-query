@@ -10,7 +10,7 @@ import {
   NodeString,
   Ident
 } from './nodes.js';
-import { foldCst } from './transforms.js';
+import { fold } from './transforms.js';
 
 const { seq, alt, any, string, regexp, optWhitespace, succeed } = parsimmon;
 
@@ -83,7 +83,7 @@ function repairDelimiters(string, { left, right, escape, quote }) {
 }
 
 function trimCst(cst, prefixLength, inputLength) {
-  return foldCst(cst, {
+  return fold(cst, {
     preVisit(node) {
       if (node === undefined) {
         return undefined;

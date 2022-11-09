@@ -1,18 +1,18 @@
 import { And, Or, Not, Paren, Literal, Term } from './nodes.js';
 
-export function foldCst(cst, { preVisit = (x) => x, postVisit = (x) => x }) {
-  cst = preVisit(cst);
-  if (cst?.children !== undefined) {
-    cst.children = cst.children.map((node) =>
-      foldCst(node, { preVisit, postVisit })
+export function fold(node, { preVisit = (x) => x, postVisit = (x) => x }) {
+  node = preVisit(node);
+  if (node?.children !== undefined) {
+    node.children = node.children.map((node) =>
+      fold(node, { preVisit, postVisit })
     );
   }
 
-  return postVisit(cst);
+  return postVisit(node);
 }
 
 export function removeLiterals(node) {
-  return foldCst(node, {
+  return fold(node, {
     preVisit(node) {
       if (
         typeof node === 'object' &&
@@ -27,7 +27,7 @@ export function removeLiterals(node) {
 }
 
 export function stringsToLiterals(node) {
-  return foldCst(node, {
+  return fold(node, {
     preVisit(node) {
       if (node?.name === 'String') {
         const {
@@ -44,7 +44,7 @@ export function stringsToLiterals(node) {
 }
 
 export function minimizeChildren(node) {
-  return foldCst(node, {
+  return fold(node, {
     postVisit(node) {
       switch (node?.name) {
         case 'And':
@@ -69,7 +69,7 @@ export function minimizeChildren(node) {
 }
 
 export function removeParens(node) {
-  return foldCst(node, {
+  return fold(node, {
     preVisit(node) {
       if (node?.name === 'Parenthetical') {
         return node.expression;
@@ -81,7 +81,7 @@ export function removeParens(node) {
 }
 
 export function collapseIncomplete(node) {
-  return foldCst(node, {
+  return fold(node, {
     postVisit(node) {
       switch (node?.name) {
         case 'And':
@@ -110,7 +110,7 @@ export function collapseIncomplete(node) {
 }
 
 export function removeOffsets(node) {
-  return foldCst(node, {
+  return fold(node, {
     preVisit(node) {
       if (node === undefined) {
         return undefined;
