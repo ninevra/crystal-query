@@ -1,26 +1,29 @@
 import parsimmon from 'parsimmon';
 
-import { And, Paren } from './nodes.js';
+import {
+  And,
+  Paren,
+  Or,
+  Not,
+  Literal,
+  Term,
+  NodeString,
+  Ident
+} from './nodes.js';
 
-const { seq, seqObj, alt, any, string, regexp, optWhitespace, succeed } =
-  parsimmon;
+const { seq, alt, any, string, regexp, optWhitespace, succeed } = parsimmon;
 
 const _ = optWhitespace.thru(mark);
 
-function node(name) {
-  return (parser) =>
-    parser.thru(mark).map(({ value, ...rest }) => ({
-      ...value,
-      ...rest,
-      name
-    }));
-}
-
-function node2(Type) {
+function branchNode(Type) {
   return (parser) =>
     parser
       .thru(mark)
       .map(({ value, ...rest }) => new Type({ children: value, ...rest }));
+}
+
+function leafNode(Type) {
+  return (parser) => parser.thru(mark).map((node) => new Type(node));
 }
 
 function mark(parser) {
@@ -132,12 +135,6 @@ function trimCst(cst, prefixLength, inputLength) {
     cst.children = cst.children.map((node) =>
       trimCst(node, prefixLength, inputLength)
     );
-  } else {
-    for (const key of Object.getOwnPropertyNames(cst)) {
-      if (typeof cst[key] === 'object' && cst[key] !== undefined) {
-        cst[key] = trimCst(cst[key], prefixLength, inputLength);
-      }
-    }
   }
 
   return cst;
@@ -147,10 +144,14 @@ export class Parser {
   constructor() {
     this.language = parsimmon.createLanguage({
       operator: () =>
-        alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(mark),
-      and: (l) => l.word.assert((word) => word === 'and').thru(mark),
-      or: (l) => l.word.assert((word) => word === 'or').thru(mark),
-      not: (l) => l.word.assert((word) => word === 'not').thru(mark),
+        alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(
+          leafNode(Literal)
+        ),
+      and: (l) =>
+        l.word.assert((word) => word === 'and').thru(leafNode(Literal)),
+      or: (l) => l.word.assert((word) => word === 'or').thru(leafNode(Literal)),
+      not: (l) =>
+        l.word.assert((word) => word === 'not').thru(leafNode(Literal)),
       keyword: (l) => alt(l.and, l.or, l.not),
       escaped: () =>
         seq(string('\\'), any).map(([slash, char]) => ({
@@ -165,54 +166,41 @@ export class Parser {
           .map((parts) => ({
             raw: parts.map(({ raw }) => raw).join(''),
             value: parts.map(({ value }) => value).join('')
-          })),
+          }))
+          .thru(mark)
+          .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
+      quote: () => string('"').thru(leafNode(Literal)),
       string: (l) =>
-        seqObj(
-          ['open', string('"').thru(mark)],
-          ['content', l.stringContent],
-          ['close', string('"').thru(mark)]
-        )
-          .map(({ content, ...rest }) => ({ ...rest, ...content }))
-          .thru(node('String')),
+        seq(l.quote, l.stringContent, l.quote).thru(branchNode(NodeString)),
       word: () => regexp(/[^:<>="()\s]+/),
       identifier: (l) =>
-        l.word.assert((word) => !l.keyword.parse(word).status).thru(mark),
+        l.word
+          .assert((word) => !l.keyword.parse(word).status)
+          .thru(leafNode(Ident)),
       field: (l) => l.identifier,
       simpleValue: (l) => alt(l.string, l.identifier),
       nothing: () => succeed(undefined),
-      lparen: () => string('(').thru(mark),
-      rparen: () => string(')').thru(mark),
+      lparen: () => string('(').thru(leafNode(Literal)),
+      rparen: () => string(')').thru(leafNode(Literal)),
       valueParen: (l) =>
-        seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(node2(Paren)),
+        seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branchNode(Paren)),
       valueBasic: (l) => alt(l.valueParen, l.simpleValue),
       valueNot: (l) =>
-        alt(
-          seqObj(['not', l.not], _, [
-            'expression',
-            alt(l.valueNot, l.nothing)
-          ]).thru(node('Not')),
-          l.valueBasic
-        ),
+        alt(seq(l.not, _, l.optValueNot).thru(branchNode(Not)), l.valueBasic),
+      optValueNot: (l) => alt(l.valueNot, l.nothing),
       valueAnd: (l) =>
         alt(
-          seq(
-            alt(l.valueNot, l.nothing),
-            _,
-            l.and,
-            _,
-            alt(l.valueAnd, l.nothing)
-          ).thru(node2(And)),
-          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(node2(And)),
+          seq(l.optValueNot, _, l.and, _, l.optValueAnd).thru(branchNode(And)),
+          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(branchNode(And)),
           l.valueNot
         ),
+      optValueAnd: (l) => alt(l.valueAnd, l.nothing),
       valueOr: (l) =>
         alt(
-          seqObj(['left', alt(l.valueAnd, l.nothing)], _, ['or', l.or], _, [
-            'right',
-            alt(l.valueOr, l.nothing)
-          ]).thru(node('Or')),
+          seq(l.optValueAnd, _, l.or, _, l.optValueOr).thru(branchNode(Or)),
           l.valueAnd
         ),
+      optValueOr: (l) => alt(l.valueOr, l.nothing),
       valueExpr: (l) => l.valueOr,
       term: (l) =>
         alt(
@@ -221,33 +209,27 @@ export class Parser {
           seq(l.field, l.operator, l.nothing),
           seq(l.nothing, l.operator, l.nothing),
           seq(l.nothing, l.nothing, l.valueBasic)
-        )
-          .map(([field, operator, value]) => ({ field, operator, value }))
-          .thru(node('Term')),
+        ).thru(branchNode(Term)),
       parenthetical: (l) =>
-        seq(l.lparen, _, l.optExpression, _, l.rparen).thru(node2(Paren)),
+        seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branchNode(Paren)),
       basic: (l) => alt(l.term, l.parenthetical),
       negation: (l) =>
-        alt(
-          seqObj(['not', l.not], _, ['expression', l.optNegation]).thru(
-            node('Not')
-          ),
-          l.basic
-        ),
+        alt(seq(l.not, _, l.optNegation).thru(branchNode(Not)), l.basic),
       optNegation: (l) => alt(l.negation, l.nothing),
       conjunction: (l) =>
         alt(
-          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(node2(And)),
-          seq(l.negation, _, l.nothing, _, l.conjunction).thru(node2(And)),
+          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(
+            branchNode(And)
+          ),
+          seq(l.negation, _, l.nothing, _, l.conjunction).thru(branchNode(And)),
           l.negation
         ),
       optConjunction: (l) => alt(l.conjunction, l.nothing),
       disjunction: (l) =>
         alt(
-          seqObj(['left', l.optConjunction], _, ['or', l.or], _, [
-            'right',
-            l.optDisjunction
-          ]).thru(node('Or')),
+          seq(l.optConjunction, _, l.or, _, l.optDisjunction).thru(
+            branchNode(Or)
+          ),
           l.conjunction
         ),
       optDisjunction: (l) => alt(l.disjunction, l.nothing),

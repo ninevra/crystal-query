@@ -121,14 +121,8 @@ export class Term extends Node {
   }
 }
 
-export class String extends Node {
+export class NodeString extends Node {
   name = 'String';
-
-  constructor({ raw, value, ...rest }) {
-    super(rest);
-    this.raw = raw;
-    this.value = value;
-  }
 
   get open() {
     return this.children[0];
@@ -138,20 +132,31 @@ export class String extends Node {
     this.children[0] = child;
   }
 
-  get close() {
+  get content() {
     return this.children[1];
   }
 
-  set close(child) {
+  set content(child) {
     this.children[1] = child;
+  }
+
+  get close() {
+    return this.children[2];
+  }
+
+  set close(child) {
+    this.children[2] = child;
   }
 }
 
 export class Literal {
-  constructor({ start, end, value }) {
+  constructor({ start, end, value, raw }) {
     this.start = start;
     this.end = end;
     this.value = value;
+    if (raw !== undefined) {
+      this.raw = raw;
+    }
   }
 }
 
