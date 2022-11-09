@@ -15,7 +15,7 @@ import { repairDelimiters, missingDelimiters, trimCst } from './delimiters.js';
 
 const { seq, alt, any, string, regexp, optWhitespace, succeed } = parsimmon;
 
-const _ = optWhitespace.thru(mark);
+const _ = optWhitespace.thru(leaf(Literal));
 
 function branch(Type) {
   return (parser) =>
