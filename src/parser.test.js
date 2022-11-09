@@ -2,6 +2,7 @@ import test from 'ava';
 import parsimmon from 'parsimmon';
 import jsStringEscape from 'js-string-escape';
 import { Parser } from './parser.js';
+import { astFromCst } from './transforms.js';
 
 const nonterminalMacro = test.macro({
   exec(t, nonterminal, input) {
@@ -41,7 +42,12 @@ const initialNTMacro = test.macro({
 
 const macro = test.macro({
   exec(t, input) {
-    t.snapshot(new Parser().parse(input), `"${jsStringEscape(input)}"`);
+    const name = `"${jsStringEscape(input)}"`;
+    const result = new Parser().parse(input);
+    t.snapshot(result, name);
+    if (result.status) {
+      t.snapshot(astFromCst(result.value), `AST: ${name}`);
+    }
   },
   title(providedTitle, input) {
     if (providedTitle === undefined) {
