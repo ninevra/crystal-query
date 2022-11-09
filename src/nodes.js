@@ -1,15 +1,18 @@
 class Node {
-  constructor({ start, end, children = [], ...rest }) {
-    this.start = start;
-    this.end = end;
-    this.children = children;
-    for (const [key, value] of Object.entries(rest)) {
+  constructor(data) {
+    for (const [key, value] of Object.entries(data)) {
       this[key] = value;
     }
   }
 }
 
-class Binary extends Node {
+class Branch extends Node {
+  constructor({ children = [], ...rest }) {
+    super({ children, ...rest });
+  }
+}
+
+class Binary extends Branch {
   get left() {
     return this.children[0];
   }
@@ -51,7 +54,7 @@ export class Or extends Binary {
   }
 }
 
-class Unary extends Node {
+class Unary extends Branch {
   get expression() {
     return this.children[2];
   }
@@ -93,7 +96,7 @@ export class Paren extends Unary {
   }
 }
 
-export class Term extends Node {
+export class Term extends Branch {
   name = 'Term';
 
   get field() {
@@ -121,7 +124,7 @@ export class Term extends Node {
   }
 }
 
-export class NodeString extends Node {
+export class NodeString extends Branch {
   name = 'String';
 
   get open() {
@@ -149,16 +152,7 @@ export class NodeString extends Node {
   }
 }
 
-export class Literal {
-  constructor({ start, end, value, raw }) {
-    this.start = start;
-    this.end = end;
-    this.value = value;
-    if (raw !== undefined) {
-      this.raw = raw;
-    }
-  }
-}
+export class Literal extends Node {}
 
 export class Ident extends Literal {
   name = 'Identifier';

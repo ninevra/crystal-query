@@ -34,36 +34,6 @@ function mark(parser) {
   }));
 }
 
-/* eslint-disable no-unused-vars */
-function collapseBinary(node) {
-  if (node.left === undefined) {
-    return node.right;
-  }
-
-  if (node.right === undefined) {
-    return node.left;
-  }
-
-  return node;
-}
-
-function collapseUnary(node) {
-  if (node.expression === undefined) {
-    return node.expression;
-  }
-
-  return node;
-}
-
-function collapseTerm(term) {
-  if ((term.field ?? term.operator ?? term.value) === undefined) {
-    return undefined;
-  }
-
-  return term;
-}
-/* eslint-enable no-unused-vars */
-
 function missingDelimiters(string) {
   let left = 0;
   let right = 0;
@@ -111,33 +81,166 @@ function repairDelimiters(string, { left, right, escape, quote }) {
   return { prefix, suffix, balanced };
 }
 
-function trimCst(cst, prefixLength, inputLength) {
-  if (cst === undefined) {
-    return undefined;
-  }
-
-  if (cst.end <= prefixLength) {
-    // Node exists wholely in the prefix
-    return undefined;
-  }
-
-  cst.start = Math.max(0, cst.start - prefixLength);
-  cst.end -= prefixLength;
-
-  if (cst.start >= inputLength) {
-    // Node exists wholely in the suffix
-    return undefined;
-  }
-
-  cst.end = Math.min(inputLength, cst.end);
-
-  if (cst.children) {
+function foldCst(cst, { preVisit = (x) => x, postVisit = (x) => x }) {
+  cst = preVisit(cst);
+  if (cst?.children !== undefined) {
     cst.children = cst.children.map((node) =>
-      trimCst(node, prefixLength, inputLength)
+      foldCst(node, { preVisit, postVisit })
     );
   }
 
-  return cst;
+  return postVisit(cst);
+}
+
+function trimCst(cst, prefixLength, inputLength) {
+  return foldCst(cst, {
+    preVisit(node) {
+      if (node === undefined) {
+        return undefined;
+      }
+
+      if (node.end <= prefixLength && node.start < prefixLength) {
+        // Node exists wholely in the prefix
+        return undefined;
+      }
+
+      node.start = Math.max(0, node.start - prefixLength);
+      node.end -= prefixLength;
+
+      if (node.start >= inputLength && node.end > inputLength) {
+        // Node exists wholely in the suffix
+        return undefined;
+      }
+
+      node.end = Math.min(inputLength, node.end);
+
+      return node;
+    }
+  });
+}
+
+function removeLiterals(node) {
+  return foldCst(node, {
+    preVisit(node) {
+      if (
+        typeof node === 'object' &&
+        (node?.name === undefined || node?.name === 'Identifier')
+      ) {
+        return node?.value;
+      }
+
+      return node;
+    }
+  });
+}
+
+function stringsToLiterals(node) {
+  return foldCst(node, {
+    preVisit(node) {
+      if (node?.name === 'String') {
+        const {
+          start,
+          end,
+          content: { value, raw }
+        } = node;
+        return new Literal({ start, end, value, raw });
+      }
+
+      return node;
+    }
+  });
+}
+
+function minimizeChildren(node) {
+  return foldCst(node, {
+    postVisit(node) {
+      switch (node?.name) {
+        case 'And':
+          return new And({ left: node.left, right: node.right });
+        case 'Or':
+          return new Or({ left: node.left, right: node.right });
+        case 'Not':
+          return new Not({ expression: node.expression });
+        case 'Parenthetical':
+          return new Paren({ expression: node.expression });
+        case 'Term':
+          return new Term({
+            field: node.field,
+            operator: node.operator,
+            value: node.value
+          });
+        default:
+          return node;
+      }
+    }
+  });
+}
+
+function removeParens(node) {
+  return foldCst(node, {
+    preVisit(node) {
+      if (node?.name === 'Parenthetical') {
+        return node.expression;
+      }
+
+      return node;
+    }
+  });
+}
+
+function collapseIncomplete(node) {
+  return foldCst(node, {
+    postVisit(node) {
+      switch (node?.name) {
+        case 'And':
+        case 'Or':
+          if (node.left === undefined) {
+            return node.right;
+          }
+
+          if (node.right === undefined) {
+            return node.left;
+          }
+
+          return node;
+        case 'Not':
+        case 'Parenthetical':
+          if (node.expression === undefined) {
+            return node.expression;
+          }
+
+          return node;
+        default:
+          return node;
+      }
+    }
+  });
+}
+
+function removeOffsets(node) {
+  return foldCst(node, {
+    preVisit(node) {
+      if (node === undefined) {
+        return undefined;
+      }
+
+      if (typeof node !== 'object') {
+        return node;
+      }
+
+      const { start, end, ...rest } = node;
+
+      return new node.constructor(rest);
+    }
+  });
+}
+
+function astFromCst(cst) {
+  return removeOffsets(
+    collapseIncomplete(
+      removeParens(minimizeChildren(removeLiterals(stringsToLiterals(cst))))
+    )
+  );
 }
 
 export class Parser {
@@ -245,6 +348,7 @@ export class Parser {
     const result = this.language.query.parse(balanced);
     if (result.status) {
       result.value = trimCst(result.value, prefix.length, input.length);
+      result.value = astFromCst(result.value);
     }
 
     return result;
