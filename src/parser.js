@@ -157,13 +157,14 @@ export class Parser {
           raw: slash + char,
           value: char
         })),
-      unescaped: () => regexp(/[^"]+/).map((value) => ({ raw: value, value })),
+      unescaped: () =>
+        regexp(/[^\\"]+/).map((value) => ({ raw: value, value })),
       stringContent: (l) =>
         alt(l.escaped, l.unescaped)
           .many()
           .map((parts) => ({
-            raw: parts.map(({ raw }) => raw).join(','),
-            value: parts.map(({ value }) => value).join(',')
+            raw: parts.map(({ raw }) => raw).join(''),
+            value: parts.map(({ value }) => value).join('')
           })),
       string: (l) =>
         seqObj(
