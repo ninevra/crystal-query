@@ -1,13 +1,13 @@
 import test from 'ava';
 import parsimmon from 'parsimmon';
 import jsStringEscape from 'js-string-escape';
-import { Parser } from './parser.js';
+import { Parser, language } from './parser.js';
 import { astFromCst } from './transforms.js';
 
 const nonterminalMacro = test.macro({
   exec(t, nonterminal, input) {
     t.snapshot(
-      new Parser().language[nonterminal].parse(input),
+      language[nonterminal].parse(input),
       `${nonterminal}: "${jsStringEscape(input)}"`
     );
   },
@@ -25,7 +25,7 @@ const nonterminalMacro = test.macro({
 const initialNTMacro = test.macro({
   exec(t, nonterminal, input) {
     t.snapshot(
-      new Parser().language[nonterminal].skip(parsimmon.all).parse(input),
+      language[nonterminal].skip(parsimmon.all).parse(input),
       `${nonterminal}: "${jsStringEscape(input)}"`
     );
   },

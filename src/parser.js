@@ -109,109 +109,98 @@ function trimCst(cst, prefixLength, inputLength) {
   });
 }
 
-export class Parser {
-  constructor() {
-    this.language = parsimmon.createLanguage({
-      operator: () =>
-        alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(
-          leafNode(Literal)
-        ),
-      and: (l) =>
-        l.word.assert((word) => word === 'and').thru(leafNode(Literal)),
-      or: (l) => l.word.assert((word) => word === 'or').thru(leafNode(Literal)),
-      not: (l) =>
-        l.word.assert((word) => word === 'not').thru(leafNode(Literal)),
-      keyword: (l) => alt(l.and, l.or, l.not),
-      escaped: () =>
-        seq(string('\\'), any).map(([slash, char]) => ({
-          raw: slash + char,
-          value: char
-        })),
-      unescaped: () =>
-        regexp(/[^\\"]+/).map((value) => ({ raw: value, value })),
-      stringContent: (l) =>
-        alt(l.escaped, l.unescaped)
-          .many()
-          .map((parts) => ({
-            raw: parts.map(({ raw }) => raw).join(''),
-            value: parts.map(({ value }) => value).join('')
-          }))
-          .thru(mark)
-          .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
-      quote: () => string('"').thru(leafNode(Literal)),
-      string: (l) =>
-        seq(l.quote, l.stringContent, l.quote).thru(branchNode(NodeString)),
-      word: () => regexp(/[^:<>="()\s]+/),
-      identifier: (l) =>
-        l.word
-          .assert((word) => !l.keyword.parse(word).status)
-          .thru(leafNode(Ident)),
-      field: (l) => l.identifier,
-      simpleValue: (l) => alt(l.string, l.identifier),
-      nothing: () => succeed(undefined),
-      lparen: () => string('(').thru(leafNode(Literal)),
-      rparen: () => string(')').thru(leafNode(Literal)),
-      valueParen: (l) =>
-        seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branchNode(Paren)),
-      valueBasic: (l) => alt(l.valueParen, l.simpleValue),
-      valueNot: (l) =>
-        alt(seq(l.not, _, l.optValueNot).thru(branchNode(Not)), l.valueBasic),
-      optValueNot: (l) => alt(l.valueNot, l.nothing),
-      valueAnd: (l) =>
-        alt(
-          seq(l.optValueNot, _, l.and, _, l.optValueAnd).thru(branchNode(And)),
-          seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(branchNode(And)),
-          l.valueNot
-        ),
-      optValueAnd: (l) => alt(l.valueAnd, l.nothing),
-      valueOr: (l) =>
-        alt(
-          seq(l.optValueAnd, _, l.or, _, l.optValueOr).thru(branchNode(Or)),
-          l.valueAnd
-        ),
-      optValueOr: (l) => alt(l.valueOr, l.nothing),
-      valueExpr: (l) => l.valueOr,
-      term: (l) =>
-        alt(
-          seq(l.field, l.operator, l.valueBasic),
-          seq(l.nothing, l.operator, l.valueBasic),
-          seq(l.field, l.operator, l.nothing),
-          seq(l.nothing, l.operator, l.nothing),
-          seq(l.nothing, l.nothing, l.valueBasic)
-        ).thru(branchNode(Term)),
-      parenthetical: (l) =>
-        seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branchNode(Paren)),
-      basic: (l) => alt(l.term, l.parenthetical),
-      negation: (l) =>
-        alt(seq(l.not, _, l.optNegation).thru(branchNode(Not)), l.basic),
-      optNegation: (l) => alt(l.negation, l.nothing),
-      conjunction: (l) =>
-        alt(
-          seq(l.optNegation, _, l.and, _, l.optConjunction).thru(
-            branchNode(And)
-          ),
-          seq(l.negation, _, l.nothing, _, l.conjunction).thru(branchNode(And)),
-          l.negation
-        ),
-      optConjunction: (l) => alt(l.conjunction, l.nothing),
-      disjunction: (l) =>
-        alt(
-          seq(l.optConjunction, _, l.or, _, l.optDisjunction).thru(
-            branchNode(Or)
-          ),
-          l.conjunction
-        ),
-      optDisjunction: (l) => alt(l.disjunction, l.nothing),
-      expression: (l) => l.disjunction,
-      optExpression: (l) => alt(l.expression, l.nothing),
-      query: (l) => l.optExpression.trim(_)
-    });
-  }
+export const language = parsimmon.createLanguage({
+  operator: () =>
+    alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(leafNode(Literal)),
+  and: (l) => l.word.assert((word) => word === 'and').thru(leafNode(Literal)),
+  or: (l) => l.word.assert((word) => word === 'or').thru(leafNode(Literal)),
+  not: (l) => l.word.assert((word) => word === 'not').thru(leafNode(Literal)),
+  keyword: (l) => alt(l.and, l.or, l.not),
+  escaped: () =>
+    seq(string('\\'), any).map(([slash, char]) => ({
+      raw: slash + char,
+      value: char
+    })),
+  unescaped: () => regexp(/[^\\"]+/).map((value) => ({ raw: value, value })),
+  stringContent: (l) =>
+    alt(l.escaped, l.unescaped)
+      .many()
+      .map((parts) => ({
+        raw: parts.map(({ raw }) => raw).join(''),
+        value: parts.map(({ value }) => value).join('')
+      }))
+      .thru(mark)
+      .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
+  quote: () => string('"').thru(leafNode(Literal)),
+  string: (l) =>
+    seq(l.quote, l.stringContent, l.quote).thru(branchNode(NodeString)),
+  word: () => regexp(/[^:<>="()\s]+/),
+  identifier: (l) =>
+    l.word
+      .assert((word) => !l.keyword.parse(word).status)
+      .thru(leafNode(Ident)),
+  field: (l) => l.identifier,
+  simpleValue: (l) => alt(l.string, l.identifier),
+  nothing: () => succeed(undefined),
+  lparen: () => string('(').thru(leafNode(Literal)),
+  rparen: () => string(')').thru(leafNode(Literal)),
+  valueParen: (l) =>
+    seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branchNode(Paren)),
+  valueBasic: (l) => alt(l.valueParen, l.simpleValue),
+  valueNot: (l) =>
+    alt(seq(l.not, _, l.optValueNot).thru(branchNode(Not)), l.valueBasic),
+  optValueNot: (l) => alt(l.valueNot, l.nothing),
+  valueAnd: (l) =>
+    alt(
+      seq(l.optValueNot, _, l.and, _, l.optValueAnd).thru(branchNode(And)),
+      seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(branchNode(And)),
+      l.valueNot
+    ),
+  optValueAnd: (l) => alt(l.valueAnd, l.nothing),
+  valueOr: (l) =>
+    alt(
+      seq(l.optValueAnd, _, l.or, _, l.optValueOr).thru(branchNode(Or)),
+      l.valueAnd
+    ),
+  optValueOr: (l) => alt(l.valueOr, l.nothing),
+  valueExpr: (l) => l.valueOr,
+  term: (l) =>
+    alt(
+      seq(l.field, l.operator, l.valueBasic),
+      seq(l.nothing, l.operator, l.valueBasic),
+      seq(l.field, l.operator, l.nothing),
+      seq(l.nothing, l.operator, l.nothing),
+      seq(l.nothing, l.nothing, l.valueBasic)
+    ).thru(branchNode(Term)),
+  parenthetical: (l) =>
+    seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branchNode(Paren)),
+  basic: (l) => alt(l.term, l.parenthetical),
+  negation: (l) =>
+    alt(seq(l.not, _, l.optNegation).thru(branchNode(Not)), l.basic),
+  optNegation: (l) => alt(l.negation, l.nothing),
+  conjunction: (l) =>
+    alt(
+      seq(l.optNegation, _, l.and, _, l.optConjunction).thru(branchNode(And)),
+      seq(l.negation, _, l.nothing, _, l.conjunction).thru(branchNode(And)),
+      l.negation
+    ),
+  optConjunction: (l) => alt(l.conjunction, l.nothing),
+  disjunction: (l) =>
+    alt(
+      seq(l.optConjunction, _, l.or, _, l.optDisjunction).thru(branchNode(Or)),
+      l.conjunction
+    ),
+  optDisjunction: (l) => alt(l.disjunction, l.nothing),
+  expression: (l) => l.disjunction,
+  optExpression: (l) => alt(l.expression, l.nothing),
+  query: (l) => l.optExpression.trim(_)
+});
 
+export class Parser {
   parse(input) {
     const missing = missingDelimiters(input);
     const { balanced, prefix } = repairDelimiters(input, missing);
-    const result = this.language.query.parse(balanced);
+    const result = language.query.parse(balanced);
     if (result.status) {
       result.value = trimCst(result.value, prefix.length, input.length);
     }
