@@ -194,14 +194,24 @@ export const language = parsimmon.createLanguage({
 });
 
 export class Parser {
+  #repairDelimiters;
+
+  constructor({ repairDelimiters = true } = {}) {
+    this.#repairDelimiters = repairDelimiters;
+  }
+
   parse(input) {
-    const missing = missingDelimiters(input);
-    const { balanced, prefix } = repairDelimiters(input, missing);
-    const result = language.query.parse(balanced);
-    if (result.status) {
-      result.value = trimCst(result.value, prefix.length, input.length);
+    if (this.#repairDelimiters) {
+      const missing = missingDelimiters(input);
+      const { balanced, prefix } = repairDelimiters(input, missing);
+      const result = language.query.parse(balanced);
+      if (result.status) {
+        result.value = trimCst(result.value, prefix.length, input.length);
+      }
+
+      return result;
     }
 
-    return result;
+    return language.query.parse(input);
   }
 }
