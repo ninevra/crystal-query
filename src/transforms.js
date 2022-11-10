@@ -11,7 +11,7 @@ export function fold(node, { preVisit = (x) => x, postVisit = (x) => x }) {
   return postVisit(node);
 }
 
-export function removeLiterals(node) {
+export function leavesToValue(node) {
   return fold(node, {
     preVisit(node) {
       if (
@@ -26,7 +26,7 @@ export function removeLiterals(node) {
   });
 }
 
-export function stringsToLiterals(node) {
+export function textToLiteral(node) {
   return fold(node, {
     preVisit(node) {
       if (node?.name === 'Text') {
@@ -68,7 +68,7 @@ export function minimizeChildren(node) {
   });
 }
 
-export function removeParens(node) {
+export function removeGroups(node) {
   return fold(node, {
     preVisit(node) {
       if (node?.name === 'Group') {
@@ -130,7 +130,7 @@ export function removeOffsets(node) {
 export function astFromCst(cst) {
   return removeOffsets(
     collapseIncomplete(
-      removeParens(minimizeChildren(removeLiterals(stringsToLiterals(cst))))
+      removeGroups(minimizeChildren(leavesToValue(textToLiteral(cst))))
     )
   );
 }
