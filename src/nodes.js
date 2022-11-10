@@ -1,18 +1,16 @@
 class Node {
-  constructor(data) {
-    for (const [key, value] of Object.entries(data)) {
-      this[key] = value;
+  constructor({ start, end }) {
+    if (start !== undefined) {
+      this.start = start;
+    }
+
+    if (end !== undefined) {
+      this.end = end;
     }
   }
 }
 
-class Branch extends Node {
-  constructor({ children = [], ...rest }) {
-    super({ children, ...rest });
-  }
-}
-
-class Binary extends Branch {
+class Binary extends Node {
   get left() {
     return this.children[0];
   }
@@ -33,6 +31,11 @@ class Binary extends Branch {
 export class And extends Binary {
   name = 'And';
 
+  constructor({ children, left, and, right, ...rest }) {
+    super(rest);
+    this.children = children ?? [left, undefined, and, undefined, right];
+  }
+
   get and() {
     return this.children[2];
   }
@@ -45,6 +48,11 @@ export class And extends Binary {
 export class Or extends Binary {
   name = 'Or';
 
+  constructor({ children, left, or, right, ...rest }) {
+    super(rest);
+    this.children = children ?? [left, undefined, or, undefined, right];
+  }
+
   get or() {
     return this.children[2];
   }
@@ -54,7 +62,7 @@ export class Or extends Binary {
   }
 }
 
-class Unary extends Branch {
+class Unary extends Node {
   get expression() {
     return this.children[2];
   }
@@ -67,6 +75,11 @@ class Unary extends Branch {
 export class Not extends Unary {
   name = 'Not';
 
+  constructor({ children, not, expression, ...rest }) {
+    super(rest);
+    this.children = children ?? [not, undefined, expression];
+  }
+
   get not() {
     return this.children[0];
   }
@@ -78,6 +91,11 @@ export class Not extends Unary {
 
 export class Group extends Unary {
   name = 'Group';
+
+  constructor({ children, open, expression, close, ...rest }) {
+    super(rest);
+    this.children = children ?? [open, undefined, expression, undefined, close];
+  }
 
   get open() {
     return this.children[0];
@@ -96,8 +114,13 @@ export class Group extends Unary {
   }
 }
 
-export class Term extends Branch {
+export class Term extends Node {
   name = 'Term';
+
+  constructor({ children, field, operator, value, ...rest }) {
+    super(rest);
+    this.children = children ?? [field, operator, value];
+  }
 
   get field() {
     return this.children[0];
@@ -124,8 +147,13 @@ export class Term extends Branch {
   }
 }
 
-export class Text extends Branch {
+export class Text extends Node {
   name = 'Text';
+
+  constructor({ children, open, content, close, ...rest }) {
+    super(rest);
+    this.children = children ?? [open, content, close];
+  }
 
   get open() {
     return this.children[0];
@@ -152,7 +180,18 @@ export class Text extends Branch {
   }
 }
 
-export class Literal extends Node {}
+export class Literal extends Node {
+  constructor({ value, raw, ...rest }) {
+    super(rest);
+    if (value !== undefined) {
+      this.value = value;
+    }
+
+    if (raw !== undefined) {
+      this.raw = raw;
+    }
+  }
+}
 
 export class Word extends Literal {
   name = 'Word';
