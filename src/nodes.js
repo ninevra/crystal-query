@@ -76,8 +76,8 @@ export class Not extends Unary {
   }
 }
 
-export class Paren extends Unary {
-  name = 'Parenthetical';
+export class Group extends Unary {
+  name = 'Group';
 
   get open() {
     return this.children[0];
@@ -124,8 +124,8 @@ export class Term extends Branch {
   }
 }
 
-export class NodeString extends Branch {
-  name = 'String';
+export class Text extends Branch {
+  name = 'Text';
 
   get open() {
     return this.children[0];
@@ -154,6 +154,6 @@ export class NodeString extends Branch {
 
 export class Literal extends Node {}
 
-export class Ident extends Literal {
-  name = 'Identifier';
+export class Word extends Literal {
+  name = 'Word';
 }

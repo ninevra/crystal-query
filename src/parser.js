@@ -1,15 +1,6 @@
 import parsimmon from 'parsimmon';
 
-import {
-  And,
-  Paren,
-  Or,
-  Not,
-  Literal,
-  Term,
-  NodeString,
-  Ident
-} from './nodes.js';
+import { And, Group, Or, Not, Literal, Term, Text, Word } from './nodes.js';
 
 import { repairDelimiters, missingDelimiters, trimCst } from './delimiters.js';
 
@@ -59,18 +50,17 @@ export const language = parsimmon.createLanguage({
       .thru(mark)
       .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
   quote: () => string('"').thru(leaf(Literal)),
-  string: (l) =>
-    seq(l.quote, l.stringContent, l.quote).thru(branch(NodeString)),
+  string: (l) => seq(l.quote, l.stringContent, l.quote).thru(branch(Text)),
   word: () => regexp(/[^:<>="()\s]+/),
   identifier: (l) =>
-    l.word.assert((word) => !l.keyword.parse(word).status).thru(leaf(Ident)),
+    l.word.assert((word) => !l.keyword.parse(word).status).thru(leaf(Word)),
   field: (l) => l.identifier,
   simpleValue: (l) => alt(l.string, l.identifier),
   nothing: () => succeed(undefined),
   lparen: () => string('(').thru(leaf(Literal)),
   rparen: () => string(')').thru(leaf(Literal)),
   valueParen: (l) =>
-    seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branch(Paren)),
+    seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branch(Group)),
   valueBasic: (l) => alt(l.valueParen, l.simpleValue),
   valueNot: (l) =>
     alt(seq(l.not, _, l.optValueNot).thru(branch(Not)), l.valueBasic),
@@ -98,7 +88,7 @@ export const language = parsimmon.createLanguage({
       seq(l.nothing, l.nothing, l.valueBasic)
     ).thru(branch(Term)),
   parenthetical: (l) =>
-    seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branch(Paren)),
+    seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branch(Group)),
   basic: (l) => alt(l.term, l.parenthetical),
   negation: (l) => alt(seq(l.not, _, l.optNegation).thru(branch(Not)), l.basic),
   optNegation: (l) => alt(l.negation, l.nothing),

@@ -1,4 +1,4 @@
-import { And, Or, Not, Paren, Literal, Term } from './nodes.js';
+import { And, Or, Not, Group, Literal, Term } from './nodes.js';
 
 export function fold(node, { preVisit = (x) => x, postVisit = (x) => x }) {
   node = preVisit(node);
@@ -16,7 +16,7 @@ export function removeLiterals(node) {
     preVisit(node) {
       if (
         typeof node === 'object' &&
-        (node?.name === undefined || node?.name === 'Identifier')
+        (node?.name === undefined || node?.name === 'Word')
       ) {
         return node?.value;
       }
@@ -29,7 +29,7 @@ export function removeLiterals(node) {
 export function stringsToLiterals(node) {
   return fold(node, {
     preVisit(node) {
-      if (node?.name === 'String') {
+      if (node?.name === 'Text') {
         const {
           start,
           end,
@@ -53,8 +53,8 @@ export function minimizeChildren(node) {
           return new Or({ left: node.left, right: node.right });
         case 'Not':
           return new Not({ expression: node.expression });
-        case 'Parenthetical':
-          return new Paren({ expression: node.expression });
+        case 'Group':
+          return new Group({ expression: node.expression });
         case 'Term':
           return new Term({
             field: node.field,
@@ -71,7 +71,7 @@ export function minimizeChildren(node) {
 export function removeParens(node) {
   return fold(node, {
     preVisit(node) {
-      if (node?.name === 'Parenthetical') {
+      if (node?.name === 'Group') {
         return node.expression;
       }
 
@@ -96,7 +96,7 @@ export function collapseIncomplete(node) {
 
           return node;
         case 'Not':
-        case 'Parenthetical':
+        case 'Group':
           if (node.expression === undefined) {
             return node.expression;
           }
