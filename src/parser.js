@@ -27,6 +27,14 @@ function mark(parser) {
   }));
 }
 
+export function isNonEmpty(node) {
+  return (
+    node?.name === 'Word' ||
+    node?.name === 'Text' ||
+    (node?.children?.some((child) => isNonEmpty(child)) ?? false)
+  );
+}
+
 export const language = parsimmon.createLanguage({
   operator: () =>
     alt(string(':'), regexp(/[<>]=/), regexp(/[<>=]/)).thru(leaf(Literal)),
@@ -60,11 +68,9 @@ export const language = parsimmon.createLanguage({
   rparen: () => string(')').thru(leaf(Literal)),
   valueParen: (l) =>
     seq(l.lparen, _, l.optValueExpr, _, l.rparen).thru(branch(Group)),
-  nonEmptyValueParen: (l) =>
-    seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branch(Group)),
   valueBasic: (l) => alt(l.valueParen, l.simpleValue),
   optValueBasic: (l) => alt(l.valueBasic, l.nothing),
-  nonEmptyValueBasic: (l) => alt(l.simpleValue, l.nonEmptyValueParen),
+  nonEmptyValueBasic: (l) => l.valueBasic.assert((node) => isNonEmpty(node)),
   valueNot: (l) =>
     alt(seq(l.not, _, l.optValueNot).thru(branch(Not)), l.valueBasic),
   optValueNot: (l) => alt(l.valueNot, l.nothing),
