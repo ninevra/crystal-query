@@ -196,3 +196,10 @@ test(macro, '"(("');
 test(macro, '"');
 test(macro, '"\\');
 test(macro, '"\\"');
+
+test(macro, 'foo : 4');
+test(macro, 'foo : (one and 2)');
+test(macro, 'foo= "42"');
+test(macro, 'foo ="42"');
+test(macro, 'foo > 3 and foo < 5');
+test(macro, 'foo > 3 foo < 4');
