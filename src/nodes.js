@@ -119,7 +119,7 @@ export class Term extends Node {
 
   constructor({ children, field, operator, value, ...rest }) {
     super(rest);
-    this.children = children ?? [field, operator, value];
+    this.children = children ?? [field, undefined, operator, undefined, value];
   }
 
   get field() {
@@ -131,19 +131,19 @@ export class Term extends Node {
   }
 
   get operator() {
-    return this.children[1];
-  }
-
-  set operator(child) {
-    this.children[1] = child;
-  }
-
-  get value() {
     return this.children[2];
   }
 
-  set value(child) {
+  set operator(child) {
     this.children[2] = child;
+  }
+
+  get value() {
+    return this.children[4];
+  }
+
+  set value(child) {
+    this.children[4] = child;
   }
 }
 

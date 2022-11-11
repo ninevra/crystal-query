@@ -81,11 +81,11 @@ export const language = parsimmon.createLanguage({
   valueExpr: (l) => l.valueOr,
   term: (l) =>
     alt(
-      seq(l.field, l.operator, l.valueBasic),
-      seq(l.nothing, l.operator, l.valueBasic),
-      seq(l.field, l.operator, l.nothing),
-      seq(l.nothing, l.operator, l.nothing),
-      seq(l.nothing, l.nothing, l.valueBasic)
+      seq(l.field, _, l.operator, _, l.valueBasic),
+      seq(l.nothing, _, l.operator, _, l.valueBasic),
+      seq(l.field, _, l.operator, _, l.nothing),
+      seq(l.nothing, _, l.operator, _, l.nothing),
+      seq(l.nothing, _, l.nothing, _, l.valueBasic)
     ).thru(branch(Term)),
   parenthetical: (l) =>
     seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branch(Group)),
