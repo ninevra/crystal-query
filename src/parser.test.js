@@ -2,7 +2,7 @@ import test from 'ava';
 import parsimmon from 'parsimmon';
 import jsStringEscape from 'js-string-escape';
 import { Parser, language } from './parser.js';
-import { astFromCst } from './transforms.js';
+import { astFromCst, queryFromCst } from './transforms.js';
 
 const nonterminalMacro = test.macro({
   exec(t, nonterminal, input) {
@@ -47,6 +47,7 @@ const macro = test.macro({
     t.snapshot(result, name);
     if (result.status) {
       t.snapshot(astFromCst(result.value), `AST: ${name}`);
+      t.is(queryFromCst(result.value).trim(), input.trim());
     }
   },
   title(providedTitle, input) {
@@ -194,7 +195,7 @@ test(macro, '"))"');
 test(macro, '"(("');
 
 test(macro, '"');
-test(macro, '"\\');
+test.failing(macro, '"\\');
 test(macro, '"\\"');
 
 test(macro, 'foo : 4');

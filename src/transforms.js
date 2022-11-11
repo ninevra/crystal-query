@@ -3,6 +3,7 @@ import { And, Or, Not, Group, Literal, Term } from './nodes.js';
 export function fold(node, { preVisit = (x) => x, postVisit = (x) => x }) {
   node = preVisit(node);
   if (node?.children !== undefined) {
+    node = new node.constructor(node);
     node.children = node.children.map((node) =>
       fold(node, { preVisit, postVisit })
     );
@@ -133,4 +134,18 @@ export function astFromCst(cst) {
       removeGroups(minimizeChildren(leavesToValue(textToLiteral(cst))))
     )
   );
+}
+
+export function queryFromCst(cst) {
+  return fold(cst, {
+    postVisit(node) {
+      switch (node?.name) {
+        case undefined:
+        case 'Word':
+          return node?.raw ?? node?.value ?? '';
+        default:
+          return node.children.join('');
+      }
+    }
+  });
 }
