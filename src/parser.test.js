@@ -203,3 +203,5 @@ test(macro, 'foo= "42"');
 test(macro, 'foo ="42"');
 test(macro, 'foo > 3 and foo < 5');
 test(macro, 'foo > 3 foo < 4');
+
+test(macro, '"foo bar":"one" "baz quux" : "two"');
