@@ -28,7 +28,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:watch": "onchange 'src/**/*.js' -- prettier --write {{changed}}",
-    "snaps:update": "ava --update-snapshots",
+    "snaps:update": "npm run build && ava --update-snapshots",
     "lint": "xo",
     "lint:fix": "xo --fix"
   },
