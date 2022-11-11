@@ -54,7 +54,7 @@ export const language = parsimmon.createLanguage({
   word: () => regexp(/[^:<>="()\s]+/),
   identifier: (l) =>
     l.word.assert((word) => !l.keyword.parse(word).status).thru(leaf(Word)),
-  field: (l) => l.identifier,
+  field: (l) => alt(l.string, l.identifier),
   simpleValue: (l) => alt(l.string, l.identifier),
   nothing: () => succeed(undefined),
   lparen: () => string('(').thru(leaf(Literal)),
