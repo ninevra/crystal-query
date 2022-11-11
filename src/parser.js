@@ -63,6 +63,7 @@ export const language = parsimmon.createLanguage({
   nonEmptyValueParen: (l) =>
     seq(l.lparen, _, l.valueExpr, _, l.rparen).thru(branch(Group)),
   valueBasic: (l) => alt(l.valueParen, l.simpleValue),
+  optValueBasic: (l) => alt(l.valueBasic, l.nothing),
   nonEmptyValueBasic: (l) => alt(l.simpleValue, l.nonEmptyValueParen),
   valueNot: (l) =>
     alt(seq(l.not, _, l.optValueNot).thru(branch(Not)), l.valueBasic),
@@ -84,10 +85,7 @@ export const language = parsimmon.createLanguage({
   optValueExpr: (l) => alt(l.valueExpr, l.nothing),
   term: (l) =>
     alt(
-      seq(l.valueBasic, _, l.operator, _, l.valueBasic),
-      seq(l.nothing, _, l.operator, _, l.valueBasic),
-      seq(l.valueBasic, _, l.operator, _, l.nothing),
-      seq(l.nothing, _, l.operator, _, l.nothing),
+      seq(l.optValueBasic, _, l.operator, _, l.optValueBasic),
       seq(l.nothing, _, l.nothing, _, l.nonEmptyValueBasic)
     ).thru(branch(Term)),
   parenthetical: (l) =>
