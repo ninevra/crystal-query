@@ -205,3 +205,6 @@ test(macro, 'foo > 3 and foo < 5');
 test(macro, 'foo > 3 foo < 4');
 
 test(macro, '"foo bar":"one" "baz quux" : "two"');
+test(macro, '(foo or bar)=3');
+test(macro, '()=42');
+test(macro, '(foo "bar"):baz');
