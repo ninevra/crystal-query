@@ -103,10 +103,6 @@ export function collapseIncomplete(node) {
 
 export function removeOffsets(node) {
   return fold(node, (node, visit) => {
-    if (node === undefined) {
-      return undefined;
-    }
-
     if (typeof node !== 'object') {
       return node;
     }
@@ -190,13 +186,9 @@ export function astFromCst(cst) {
 }
 
 export function queryFromCst(cst) {
-  return fold(cst, (node, visit) => {
-    switch (node?.name) {
-      case undefined:
-      case 'Word':
-        return node?.raw ?? node?.value ?? '';
-      default:
-        return visit(node).children.join('');
-    }
-  });
+  return fold(
+    cst,
+    (node, visit) =>
+      visit(node)?.children?.join('') ?? node?.raw ?? node?.value ?? ''
+  );
 }
