@@ -128,10 +128,82 @@ export function removeOffsets(node) {
   });
 }
 
+export function fieldGroupsToTermGroups(node) {
+  return fold(node, {
+    postVisit(node) {
+      if (node?.name === 'Term') {
+        const { field, operator, value } = node;
+
+        switch (field?.name) {
+          case 'And':
+          case 'Or':
+          case 'Not':
+          case 'Group':
+            return fold(field, {
+              postVisit(node) {
+                switch (node?.name) {
+                  case 'Word':
+                  case 'Text':
+                    return new Term({ field: node, operator, value });
+                  default:
+                    return node;
+                }
+              }
+            });
+          default:
+            return node;
+        }
+      }
+
+      return node;
+    }
+  });
+}
+
+export function valueGroupsToTermGroups(node) {
+  return fold(node, {
+    postVisit(node) {
+      if (node?.name === 'Term') {
+        const { field, operator, value } = node;
+
+        switch (value?.name) {
+          case 'And':
+          case 'Or':
+          case 'Not':
+          case 'Group':
+            return fold(value, {
+              postVisit(node) {
+                switch (node?.name) {
+                  case 'Word':
+                  case 'Text':
+                    return new Term({ field, operator, value: node });
+                  default:
+                    return node;
+                }
+              }
+            });
+          default:
+            return node;
+        }
+      }
+
+      return node;
+    }
+  });
+}
+
 export function astFromCst(cst) {
   return removeOffsets(
     collapseIncomplete(
-      removeGroups(minimizeChildren(leavesToValue(textToLiteral(cst))))
+      removeGroups(
+        leavesToValue(
+          textToLiteral(
+            fieldGroupsToTermGroups(
+              valueGroupsToTermGroups(minimizeChildren(cst))
+            )
+          )
+        )
+      )
     )
   );
 }
