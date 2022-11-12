@@ -69,6 +69,11 @@ export function trimCst(cst, prefixLength, inputLength) {
 
       node.end = Math.min(inputLength, node.end);
 
+      const length = node.end - node.start;
+      if (node.raw !== undefined && node.raw.length > length) {
+        node.raw = node.raw.slice(0, length);
+      }
+
       return node;
     }
   });
