@@ -48,33 +48,31 @@ export function repairDelimiters(string, { left, right, escape, quote }) {
 }
 
 export function trimCst(cst, prefixLength, inputLength) {
-  return fold(cst, {
-    preVisit(node) {
-      if (node === undefined) {
-        return undefined;
-      }
-
-      if (node.end <= prefixLength && node.start < prefixLength) {
-        // Node exists wholely in the prefix
-        return undefined;
-      }
-
-      node.start = Math.max(0, node.start - prefixLength);
-      node.end -= prefixLength;
-
-      if (node.start >= inputLength && node.end > inputLength) {
-        // Node exists wholely in the suffix
-        return undefined;
-      }
-
-      node.end = Math.min(inputLength, node.end);
-
-      const length = node.end - node.start;
-      if (node.raw !== undefined && node.raw.length > length) {
-        node.raw = node.raw.slice(0, length);
-      }
-
-      return node;
+  return fold(cst, (node, visit) => {
+    if (node === undefined) {
+      return undefined;
     }
+
+    if (node.end <= prefixLength && node.start < prefixLength) {
+      // Node exists wholely in the prefix
+      return undefined;
+    }
+
+    node.start = Math.max(0, node.start - prefixLength);
+    node.end -= prefixLength;
+
+    if (node.start >= inputLength && node.end > inputLength) {
+      // Node exists wholely in the suffix
+      return undefined;
+    }
+
+    node.end = Math.min(inputLength, node.end);
+
+    const length = node.end - node.start;
+    if (node.raw !== undefined && node.raw.length > length) {
+      node.raw = node.raw.slice(0, length);
+    }
+
+    return visit(node);
   });
 }

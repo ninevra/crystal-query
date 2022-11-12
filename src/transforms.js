@@ -1,24 +1,18 @@
 import { And, Or, Not, Group, Literal, Term } from './nodes.js';
 
-function fold2(node, foldfn) {
+export function fold(node, foldfn) {
   return foldfn(node, (node, fn = foldfn) =>
     node?.children === undefined
       ? node
       : new node.constructor({
           ...node,
-          children: node.children.map((node) => fold2(node, fn))
+          children: node.children.map((node) => fold(node, fn))
         })
   );
 }
 
-export function fold(node, { preVisit = (x) => x, postVisit = (x) => x }) {
-  return fold2(node, (node, visit) => {
-    return postVisit(visit(preVisit(node)));
-  });
-}
-
 export function leavesToValue(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (
       typeof node === 'object' &&
       (node?.name === undefined || node?.name === 'Word')
@@ -31,7 +25,7 @@ export function leavesToValue(node) {
 }
 
 export function textToLiteral(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (node?.name === 'Text') {
       const {
         start,
@@ -46,7 +40,7 @@ export function textToLiteral(node) {
 }
 
 export function minimizeChildren(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     node = visit(node);
     switch (node?.name) {
       case 'And':
@@ -70,7 +64,7 @@ export function minimizeChildren(node) {
 }
 
 export function removeGroups(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (node?.name === 'Group') {
       return visit(node.expression);
     }
@@ -80,7 +74,7 @@ export function removeGroups(node) {
 }
 
 export function collapseIncomplete(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     node = visit(node);
     switch (node?.name) {
       case 'And':
@@ -108,7 +102,7 @@ export function collapseIncomplete(node) {
 }
 
 export function removeOffsets(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (node === undefined) {
       return undefined;
     }
@@ -124,7 +118,7 @@ export function removeOffsets(node) {
 }
 
 export function fieldGroupsToTermGroups(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (node?.name === 'Term') {
       const { field, operator, value } = node;
 
@@ -133,7 +127,7 @@ export function fieldGroupsToTermGroups(node) {
         case 'Or':
         case 'Not':
         case 'Group':
-          return fold2(field, (node, visit) => {
+          return fold(field, (node, visit) => {
             switch (node?.name) {
               case 'Word':
               case 'Text':
@@ -152,7 +146,7 @@ export function fieldGroupsToTermGroups(node) {
 }
 
 export function valueGroupsToTermGroups(node) {
-  return fold2(node, (node, visit) => {
+  return fold(node, (node, visit) => {
     if (node?.name === 'Term') {
       const { field, operator, value } = node;
 
@@ -161,7 +155,7 @@ export function valueGroupsToTermGroups(node) {
         case 'Or':
         case 'Not':
         case 'Group':
-          return fold2(value, (node, visit) => {
+          return fold(value, (node, visit) => {
             switch (node?.name) {
               case 'Word':
               case 'Text':
@@ -196,7 +190,7 @@ export function astFromCst(cst) {
 }
 
 export function queryFromCst(cst) {
-  return fold2(cst, (node, visit) => {
+  return fold(cst, (node, visit) => {
     switch (node?.name) {
       case undefined:
       case 'Word':
