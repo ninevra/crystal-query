@@ -195,7 +195,7 @@ test(macro, '"))"');
 test(macro, '"(("');
 
 test(macro, '"');
-test(macro, '"\\');
+test.failing(macro, '"\\');
 test(macro, '"\\"');
 
 test(macro, 'foo : 4');

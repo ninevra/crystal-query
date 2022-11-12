@@ -4,8 +4,7 @@ import { And, Group, Or, Not, Literal, Term, Text, Word } from './nodes.js';
 
 import { repairDelimiters, missingDelimiters, trimCst } from './delimiters.js';
 
-const { seq, alt, any, string, regexp, optWhitespace, succeed, eof } =
-  parsimmon;
+const { seq, alt, any, string, regexp, optWhitespace, succeed } = parsimmon;
 
 const _ = optWhitespace.thru(leaf(Literal));
 
@@ -43,11 +42,10 @@ export const language = parsimmon.createLanguage({
   or: (l) => l.word.assert((word) => word === 'or').thru(leaf(Literal)),
   not: (l) => l.word.assert((word) => word === 'not').thru(leaf(Literal)),
   keyword: (l) => alt(l.and, l.or, l.not),
-  eof: () => eof.result(undefined),
-  escaped: (l) =>
-    seq(string('\\'), alt(any, l.eof)).map(([slash, char]) => ({
-      raw: slash + (char ?? ''),
-      value: char ?? '\\'
+  escaped: () =>
+    seq(string('\\'), any).map(([slash, char]) => ({
+      raw: slash + char,
+      value: char
     })),
   unescaped: () => regexp(/[^\\"]+/).map((value) => ({ raw: value, value })),
   stringContent: (l) =>
@@ -60,8 +58,7 @@ export const language = parsimmon.createLanguage({
       .thru(mark)
       .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
   quote: () => string('"').thru(leaf(Literal)),
-  string: (l) =>
-    seq(l.quote, l.stringContent, alt(l.quote, l.eof)).thru(branch(Text)),
+  string: (l) => seq(l.quote, l.stringContent, l.quote).thru(branch(Text)),
   word: () => regexp(/[^:<>="()\s]+/),
   identifier: (l) =>
     l.word.assert((word) => !l.keyword.parse(word).status).thru(leaf(Word)),
@@ -129,8 +126,8 @@ export class Parser {
 
   parse(input) {
     if (this.#repairDelimiters) {
-      const { left, right } = missingDelimiters(input);
-      const { balanced, prefix } = repairDelimiters(input, { left, right });
+      const missing = missingDelimiters(input);
+      const { balanced, prefix } = repairDelimiters(input, missing);
       const result = language.query.parse(balanced);
       if (result.status) {
         result.value = trimCst(result.value, prefix.length, input.length);
