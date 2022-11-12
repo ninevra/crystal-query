@@ -4,9 +4,13 @@ import { And, Group, Or, Not, Literal, Term, Text, Word } from './nodes.js';
 
 import { repairDelimiters, missingDelimiters, trimCst } from './delimiters.js';
 
-const { seq, alt, any, string, regexp, optWhitespace, succeed } = parsimmon;
+const { seq, alt, any, string, regexp, whitespace, succeed } = parsimmon;
 
-const _ = optWhitespace.thru(leaf(Literal));
+function opt(parser) {
+  return alt(parser, succeed(undefined));
+}
+
+const _ = opt(whitespace.thru(leaf(Literal)));
 
 function branch(Type) {
   return (parser) =>
