@@ -76,7 +76,6 @@ export const language = parsimmon.createLanguage({
   valueParen: (l) =>
     seq(l.lparen, _, opt(l.valueExpr), _, l.rparen).thru(branch(Group)),
   valueBasic: (l) => alt(l.valueParen, l.simpleValue),
-  nonEmptyValueBasic: (l) => l.valueBasic.assert((node) => isNonEmpty(node)),
   valueNot: (l) =>
     alt(seq(l.not, _, opt(l.valueNot)).thru(branch(Not)), l.valueBasic),
   valueAnd: (l) =>
