@@ -125,11 +125,7 @@ export const language = parsimmon.createLanguage({
         .assert(([, head, rest]) => rest !== undefined || isNonEmpty(head))
         .map(([start, head, rest, end]) => {
           if (rest === undefined) {
-            return new Term({
-              value: head,
-              start,
-              end
-            });
+            return new Term({ value: head, start, end });
           }
 
           return new Term({ children: [head, ...rest], start, end });
