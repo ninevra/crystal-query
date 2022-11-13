@@ -12,6 +12,8 @@ function opt(parser) {
 
 const _ = opt(whitespace.thru(leaf(Literal)));
 
+const index = parsimmon.index.map(({ offset }) => offset);
+
 function branch(Type) {
   return (parser) =>
     parser
@@ -80,24 +82,63 @@ export const language = parsimmon.createLanguage({
   optValueNot: (l) => alt(l.valueNot, l.nothing),
   valueAnd: (l) =>
     alt(
-      seq(l.optValueNot, _, l.and, _, l.optValueAnd).thru(branch(And)),
-      seq(l.valueNot, _, l.nothing, _, l.valueAnd).thru(branch(And)),
-      l.valueNot
+      seq(l.nothing, _, l.and, _, opt(l.valueAnd)).thru(branch(And)),
+      seq(
+        index,
+        l.valueNot,
+        alt(
+          seq(_, l.and, _, opt(l.valueAnd)),
+          seq(_, l.nothing, _, l.valueAnd),
+          l.nothing
+        ),
+        index
+      ).map(([start, head, rest, end]) => {
+        if (rest === undefined) {
+          return head;
+        }
+
+        return new And({ children: [head, ...rest], start, end });
+      })
     ),
   optValueAnd: (l) => alt(l.valueAnd, l.nothing),
   valueOr: (l) =>
     alt(
-      seq(l.optValueAnd, _, l.or, _, l.optValueOr).thru(branch(Or)),
-      l.valueAnd
+      seq(l.nothing, _, l.or, opt(l.valueOr)).thru(branch(Or)),
+      seq(index, l.valueAnd, opt(seq(_, l.or, _, l.optValueOr)), index).map(
+        ([start, head, rest, end]) => {
+          if (rest === undefined) {
+            return head;
+          }
+
+          return new Or({ children: [head, ...rest], start, end });
+        }
+      )
     ),
   optValueOr: (l) => alt(l.valueOr, l.nothing),
   valueExpr: (l) => l.valueOr,
   optValueExpr: (l) => alt(l.valueExpr, l.nothing),
   term: (l) =>
     alt(
-      seq(l.optValueBasic, _, l.operator, _, l.optValueBasic),
-      seq(l.nothing, _, l.nothing, _, l.nonEmptyValueBasic)
-    ).thru(branch(Term)),
+      seq(l.nothing, _, l.operator, _, l.optValueBasic).thru(branch(Term)),
+      seq(
+        index,
+        l.valueBasic,
+        opt(seq(_, l.operator, _, l.optValueBasic)),
+        index
+      )
+        .assert(([, head, rest]) => rest !== undefined || isNonEmpty(head))
+        .map(([start, head, rest, end]) => {
+          if (rest === undefined) {
+            return new Term({
+              value: head,
+              start,
+              end
+            });
+          }
+
+          return new Term({ children: [head, ...rest], start, end });
+        })
+    ),
   parenthetical: (l) =>
     seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branch(Group)),
   basic: (l) => alt(l.term, l.parenthetical),
@@ -105,15 +146,40 @@ export const language = parsimmon.createLanguage({
   optNegation: (l) => alt(l.negation, l.nothing),
   conjunction: (l) =>
     alt(
-      seq(l.optNegation, _, l.and, _, l.optConjunction).thru(branch(And)),
-      seq(l.negation, _, l.nothing, _, l.conjunction).thru(branch(And)),
-      l.negation
+      seq(l.nothing, _, l.and, _, l.optConjunction).thru(branch(And)),
+      seq(
+        index,
+        l.negation,
+        alt(
+          seq(_, l.and, _, l.optConjunction),
+          seq(_, l.nothing, _, l.conjunction),
+          l.nothing
+        ),
+        index
+      ).map(([start, head, rest, end]) => {
+        if (rest === undefined) {
+          return head;
+        }
+
+        return new And({ children: [head, ...rest], start, end });
+      })
     ),
   optConjunction: (l) => alt(l.conjunction, l.nothing),
   disjunction: (l) =>
     alt(
-      seq(l.optConjunction, _, l.or, _, l.optDisjunction).thru(branch(Or)),
-      l.conjunction
+      seq(l.nothing, _, l.or, _, l.optDisjunction).thru(branch(Or)),
+      seq(
+        index,
+        l.conjunction,
+        opt(seq(_, l.or, _, l.optDisjunction)),
+        index
+      ).map(([start, head, rest, end]) => {
+        if (rest === undefined) {
+          return head;
+        }
+
+        return new Or({ children: [head, ...rest], start, end });
+      })
     ),
   optDisjunction: (l) => alt(l.disjunction, l.nothing),
   expression: (l) => l.disjunction,
