@@ -73,13 +73,11 @@ export const language = parsimmon.createLanguage({
   lparen: () => string('(').thru(leaf(Literal)),
   rparen: () => string(')').thru(leaf(Literal)),
   valueParen: (l) =>
-    seq(l.lparen, _, l.optValueExpr, _, l.rparen).thru(branch(Group)),
+    seq(l.lparen, _, opt(l.valueExpr), _, l.rparen).thru(branch(Group)),
   valueBasic: (l) => alt(l.valueParen, l.simpleValue),
-  optValueBasic: (l) => alt(l.valueBasic, l.nothing),
   nonEmptyValueBasic: (l) => l.valueBasic.assert((node) => isNonEmpty(node)),
   valueNot: (l) =>
-    alt(seq(l.not, _, l.optValueNot).thru(branch(Not)), l.valueBasic),
-  optValueNot: (l) => alt(l.valueNot, l.nothing),
+    alt(seq(l.not, _, opt(l.valueNot)).thru(branch(Not)), l.valueBasic),
   valueAnd: (l) =>
     alt(
       seq(l.nothing, _, l.and, _, opt(l.valueAnd)).thru(branch(And)),
@@ -100,11 +98,10 @@ export const language = parsimmon.createLanguage({
         return new And({ children: [head, ...rest], start, end });
       })
     ),
-  optValueAnd: (l) => alt(l.valueAnd, l.nothing),
   valueOr: (l) =>
     alt(
       seq(l.nothing, _, l.or, opt(l.valueOr)).thru(branch(Or)),
-      seq(index, l.valueAnd, opt(seq(_, l.or, _, l.optValueOr)), index).map(
+      seq(index, l.valueAnd, opt(seq(_, l.or, _, opt(l.valueOr))), index).map(
         ([start, head, rest, end]) => {
           if (rest === undefined) {
             return head;
@@ -114,16 +111,14 @@ export const language = parsimmon.createLanguage({
         }
       )
     ),
-  optValueOr: (l) => alt(l.valueOr, l.nothing),
   valueExpr: (l) => l.valueOr,
-  optValueExpr: (l) => alt(l.valueExpr, l.nothing),
   term: (l) =>
     alt(
-      seq(l.nothing, _, l.operator, _, l.optValueBasic).thru(branch(Term)),
+      seq(l.nothing, _, l.operator, _, opt(l.valueBasic)).thru(branch(Term)),
       seq(
         index,
         l.valueBasic,
-        opt(seq(_, l.operator, _, l.optValueBasic)),
+        opt(seq(_, l.operator, _, opt(l.valueBasic))),
         index
       )
         .assert(([, head, rest]) => rest !== undefined || isNonEmpty(head))
@@ -140,18 +135,19 @@ export const language = parsimmon.createLanguage({
         })
     ),
   parenthetical: (l) =>
-    seq(l.lparen, _, l.optExpression, _, l.rparen).thru(branch(Group)),
+    seq(l.lparen, _, opt(l.expression), _, l.rparen).thru(branch(Group)),
   basic: (l) => alt(l.term, l.parenthetical),
-  negation: (l) => alt(seq(l.not, _, l.optNegation).thru(branch(Not)), l.basic),
+  negation: (l) =>
+    alt(seq(l.not, _, opt(l.negation)).thru(branch(Not)), l.basic),
   optNegation: (l) => alt(l.negation, l.nothing),
   conjunction: (l) =>
     alt(
-      seq(l.nothing, _, l.and, _, l.optConjunction).thru(branch(And)),
+      seq(l.nothing, _, l.and, _, opt(l.conjunction)).thru(branch(And)),
       seq(
         index,
         l.negation,
         alt(
-          seq(_, l.and, _, l.optConjunction),
+          seq(_, l.and, _, opt(l.conjunction)),
           seq(_, l.nothing, _, l.conjunction),
           l.nothing
         ),
@@ -164,14 +160,13 @@ export const language = parsimmon.createLanguage({
         return new And({ children: [head, ...rest], start, end });
       })
     ),
-  optConjunction: (l) => alt(l.conjunction, l.nothing),
   disjunction: (l) =>
     alt(
-      seq(l.nothing, _, l.or, _, l.optDisjunction).thru(branch(Or)),
+      seq(l.nothing, _, l.or, _, opt(l.disjunction)).thru(branch(Or)),
       seq(
         index,
         l.conjunction,
-        opt(seq(_, l.or, _, l.optDisjunction)),
+        opt(seq(_, l.or, _, opt(l.disjunction))),
         index
       ).map(([start, head, rest, end]) => {
         if (rest === undefined) {
@@ -181,10 +176,8 @@ export const language = parsimmon.createLanguage({
         return new Or({ children: [head, ...rest], start, end });
       })
     ),
-  optDisjunction: (l) => alt(l.disjunction, l.nothing),
   expression: (l) => l.disjunction,
-  optExpression: (l) => alt(l.expression, l.nothing),
-  query: (l) => l.optExpression.trim(_)
+  query: (l) => opt(l.expression).trim(_)
 });
 
 export class Parser {
