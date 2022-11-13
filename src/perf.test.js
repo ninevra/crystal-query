@@ -25,3 +25,4 @@ const macro = test.macro({
 });
 
 test(macro, '(((((((())))))))');
+test(macro, '((((((((foo)))))))):(((((((bar)))))))');
