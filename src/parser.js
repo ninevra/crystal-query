@@ -6,8 +6,10 @@ import { repairDelimiters, missingDelimiters, trimCst } from './delimiters.js';
 
 const { seq, alt, any, string, regexp, whitespace, succeed } = parsimmon;
 
+const nothing = succeed(undefined);
+
 function opt(parser) {
-  return alt(parser, succeed(undefined));
+  return alt(parser, nothing);
 }
 
 const _ = opt(whitespace.thru(leaf(Literal)));
@@ -69,7 +71,6 @@ export const language = parsimmon.createLanguage({
   identifier: (l) =>
     l.word.assert((word) => !l.keyword.parse(word).status).thru(leaf(Word)),
   simpleValue: (l) => alt(l.string, l.identifier),
-  nothing: () => succeed(undefined),
   lparen: () => string('(').thru(leaf(Literal)),
   rparen: () => string(')').thru(leaf(Literal)),
   valueParen: (l) =>
@@ -80,14 +81,14 @@ export const language = parsimmon.createLanguage({
     alt(seq(l.not, _, opt(l.valueNot)).thru(branch(Not)), l.valueBasic),
   valueAnd: (l) =>
     alt(
-      seq(l.nothing, _, l.and, _, opt(l.valueAnd)).thru(branch(And)),
+      seq(nothing, _, l.and, _, opt(l.valueAnd)).thru(branch(And)),
       seq(
         index,
         l.valueNot,
         alt(
           seq(_, l.and, _, opt(l.valueAnd)),
-          seq(_, l.nothing, _, l.valueAnd),
-          l.nothing
+          seq(_, nothing, _, l.valueAnd),
+          nothing
         ),
         index
       ).map(([start, head, rest, end]) => {
@@ -100,7 +101,7 @@ export const language = parsimmon.createLanguage({
     ),
   valueOr: (l) =>
     alt(
-      seq(l.nothing, _, l.or, opt(l.valueOr)).thru(branch(Or)),
+      seq(nothing, _, l.or, opt(l.valueOr)).thru(branch(Or)),
       seq(index, l.valueAnd, opt(seq(_, l.or, _, opt(l.valueOr))), index).map(
         ([start, head, rest, end]) => {
           if (rest === undefined) {
@@ -114,7 +115,7 @@ export const language = parsimmon.createLanguage({
   valueExpr: (l) => l.valueOr,
   term: (l) =>
     alt(
-      seq(l.nothing, _, l.operator, _, opt(l.valueBasic)).thru(branch(Term)),
+      seq(nothing, _, l.operator, _, opt(l.valueBasic)).thru(branch(Term)),
       seq(
         index,
         l.valueBasic,
@@ -139,17 +140,17 @@ export const language = parsimmon.createLanguage({
   basic: (l) => alt(l.term, l.parenthetical),
   negation: (l) =>
     alt(seq(l.not, _, opt(l.negation)).thru(branch(Not)), l.basic),
-  optNegation: (l) => alt(l.negation, l.nothing),
+  optNegation: (l) => alt(l.negation, nothing),
   conjunction: (l) =>
     alt(
-      seq(l.nothing, _, l.and, _, opt(l.conjunction)).thru(branch(And)),
+      seq(nothing, _, l.and, _, opt(l.conjunction)).thru(branch(And)),
       seq(
         index,
         l.negation,
         alt(
           seq(_, l.and, _, opt(l.conjunction)),
-          seq(_, l.nothing, _, l.conjunction),
-          l.nothing
+          seq(_, nothing, _, l.conjunction),
+          nothing
         ),
         index
       ).map(([start, head, rest, end]) => {
@@ -162,7 +163,7 @@ export const language = parsimmon.createLanguage({
     ),
   disjunction: (l) =>
     alt(
-      seq(l.nothing, _, l.or, _, opt(l.disjunction)).thru(branch(Or)),
+      seq(nothing, _, l.or, _, opt(l.disjunction)).thru(branch(Or)),
       seq(
         index,
         l.conjunction,
