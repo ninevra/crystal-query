@@ -26,3 +26,4 @@ const macro = test.macro({
 
 test(macro, '(((((((())))))))');
 test(macro, '((((((((foo)))))))):(((((((bar)))))))');
+test(macro, '(one two three four five six seven eight nine ten foo:bar)');
