@@ -10,7 +10,14 @@ class Node {
   }
 }
 
-class Binary extends Node {
+class Branch extends Node {
+  constructor({ children, ...rest }) {
+    super(rest);
+    this.children = children;
+  }
+}
+
+class Binary extends Branch {
   get left() {
     return this.children[0];
   }
@@ -24,8 +31,8 @@ export class And extends Binary {
   name = 'And';
 
   constructor({ children, left, and, right, ...rest }) {
-    super(rest);
-    this.children = children ?? [left, undefined, and, undefined, right];
+    children ??= [left, undefined, and, undefined, right];
+    super({ children, ...rest });
   }
 
   get and() {
@@ -37,8 +44,8 @@ export class Or extends Binary {
   name = 'Or';
 
   constructor({ children, left, or, right, ...rest }) {
-    super(rest);
-    this.children = children ?? [left, undefined, or, undefined, right];
+    children ??= [left, undefined, or, undefined, right];
+    super({ children, ...rest });
   }
 
   get or() {
@@ -46,7 +53,7 @@ export class Or extends Binary {
   }
 }
 
-class Unary extends Node {
+class Unary extends Branch {
   get expression() {
     return this.children[2];
   }
@@ -56,8 +63,8 @@ export class Not extends Unary {
   name = 'Not';
 
   constructor({ children, not, expression, ...rest }) {
-    super(rest);
-    this.children = children ?? [not, undefined, expression];
+    children ??= [not, undefined, expression];
+    super({ children, ...rest });
   }
 
   get not() {
@@ -69,8 +76,8 @@ export class Group extends Unary {
   name = 'Group';
 
   constructor({ children, open, expression, close, ...rest }) {
-    super(rest);
-    this.children = children ?? [open, undefined, expression, undefined, close];
+    children ??= [open, undefined, expression, undefined, close];
+    super({ children, ...rest });
   }
 
   get open() {
@@ -82,12 +89,12 @@ export class Group extends Unary {
   }
 }
 
-export class Term extends Node {
+export class Term extends Branch {
   name = 'Term';
 
   constructor({ children, field, operator, value, ...rest }) {
-    super(rest);
-    this.children = children ?? [field, undefined, operator, undefined, value];
+    children ??= [field, undefined, operator, undefined, value];
+    super({ children, ...rest });
   }
 
   get field() {
@@ -103,12 +110,12 @@ export class Term extends Node {
   }
 }
 
-export class Text extends Node {
+export class Text extends Branch {
   name = 'Text';
 
   constructor({ children, open, content, close, ...rest }) {
-    super(rest);
-    this.children = children ?? [open, content, close];
+    children ??= [open, content, close];
+    super({ children, ...rest });
   }
 
   get open() {
@@ -124,7 +131,7 @@ export class Text extends Node {
   }
 }
 
-export class Literal extends Node {
+class Leaf extends Node {
   constructor({ value, raw, ...rest }) {
     super(rest);
     if (value !== undefined) {
@@ -137,6 +144,8 @@ export class Literal extends Node {
   }
 }
 
-export class Word extends Literal {
+export class Literal extends Leaf {}
+
+export class Word extends Leaf {
   name = 'Word';
 }
