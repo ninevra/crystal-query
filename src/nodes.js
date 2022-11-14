@@ -144,7 +144,9 @@ class Leaf extends Node {
   }
 }
 
-export class Literal extends Leaf {}
+export class Literal extends Leaf {
+  name = 'Literal';
+}
 
 export class Word extends Leaf {
   name = 'Word';

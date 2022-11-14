@@ -13,10 +13,7 @@ export function fold(node, foldfn) {
 
 export function leavesToValue(node) {
   return fold(node, (node, visit) => {
-    if (
-      typeof node === 'object' &&
-      (node?.name === undefined || node?.name === 'Word')
-    ) {
+    if (typeof node === 'object' && node?.children === undefined) {
       return node?.value;
     }
 
