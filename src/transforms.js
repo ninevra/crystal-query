@@ -71,7 +71,7 @@ export function minimizeChildren(node) {
 
 export function removeGroups(node) {
   return fold(node, {
-    preVisit(node) {
+    postVisit(node) {
       if (node?.name === 'Group') {
         return node.expression;
       }
