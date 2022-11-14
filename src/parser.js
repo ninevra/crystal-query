@@ -75,7 +75,7 @@ export const language = parsimmon.createLanguage({
         value: parts.map(({ value }) => value).join('')
       }))
       .thru(mark)
-      .map(({ value, ...rest }) => new Literal({ ...value, ...rest })),
+      .map(({ value, ...rest }) => new Word({ ...value, ...rest })),
   quote: () => string('"').thru(leaf(Literal)),
   string: (l) => seq(l.quote, l.stringContent, l.quote).thru(branch(Text)),
   word: () => regexp(/[^:<>="()\s]+/),
