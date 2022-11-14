@@ -23,6 +23,17 @@ function branch(Type) {
       .map(({ value, ...rest }) => new Type({ children: value, ...rest }));
 }
 
+function branchTail(Type) {
+  return (parser) =>
+    parser.thru(mark).map(({ value: [head, tail], start, end }) => {
+      if (tail === undefined) {
+        return head;
+      }
+
+      return new Type({ children: [head, ...tail], start, end });
+    });
+}
+
 function leaf(Type) {
   return (parser) => parser.thru(mark).map((node) => new Type(node));
 }
@@ -82,34 +93,18 @@ export const language = parsimmon.createLanguage({
     alt(
       seq(nothing, _, l.and, _, opt(l.valueAnd)).thru(branch(And)),
       seq(
-        index,
         l.valueNot,
         alt(
           seq(_, l.and, _, opt(l.valueAnd)),
           seq(_, nothing, _, l.valueAnd),
           nothing
-        ),
-        index
-      ).map(([start, head, rest, end]) => {
-        if (rest === undefined) {
-          return head;
-        }
-
-        return new And({ children: [head, ...rest], start, end });
-      })
+        )
+      ).thru(branchTail(And))
     ),
   valueOr: (l) =>
     alt(
       seq(nothing, _, l.or, opt(l.valueOr)).thru(branch(Or)),
-      seq(index, l.valueAnd, opt(seq(_, l.or, _, opt(l.valueOr))), index).map(
-        ([start, head, rest, end]) => {
-          if (rest === undefined) {
-            return head;
-          }
-
-          return new Or({ children: [head, ...rest], start, end });
-        }
-      )
+      seq(l.valueAnd, opt(seq(_, l.or, _, opt(l.valueOr)))).thru(branchTail(Or))
     ),
   valueExpr: (l) => l.valueOr,
   term: (l) =>
@@ -140,37 +135,20 @@ export const language = parsimmon.createLanguage({
     alt(
       seq(nothing, _, l.and, _, opt(l.conjunction)).thru(branch(And)),
       seq(
-        index,
         l.negation,
         alt(
           seq(_, l.and, _, opt(l.conjunction)),
           seq(_, nothing, _, l.conjunction),
           nothing
-        ),
-        index
-      ).map(([start, head, rest, end]) => {
-        if (rest === undefined) {
-          return head;
-        }
-
-        return new And({ children: [head, ...rest], start, end });
-      })
+        )
+      ).thru(branchTail(And))
     ),
   disjunction: (l) =>
     alt(
       seq(nothing, _, l.or, _, opt(l.disjunction)).thru(branch(Or)),
-      seq(
-        index,
-        l.conjunction,
-        opt(seq(_, l.or, _, opt(l.disjunction))),
-        index
-      ).map(([start, head, rest, end]) => {
-        if (rest === undefined) {
-          return head;
-        }
-
-        return new Or({ children: [head, ...rest], start, end });
-      })
+      seq(l.conjunction, opt(seq(_, l.or, _, opt(l.disjunction)))).thru(
+        branchTail(Or)
+      )
     ),
   expression: (l) => l.disjunction,
   query: (l) => opt(l.expression).trim(_)
