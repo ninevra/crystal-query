@@ -1,170 +1,154 @@
-import { And, Or, Not, Group, Literal, Term } from './nodes.js';
+import { And, Or, Not, Group, Term } from './nodes.js';
 
 export function fold(node, foldfn) {
-  return foldfn(node, (node, fn = foldfn) =>
-    node?.children === undefined
-      ? node
-      : new node.constructor({
-          ...node,
-          children: node.children.map((node) => fold(node, fn))
-        })
-  );
+  return foldfn(node, (node) => visit(node, foldfn));
+}
+
+export function visit(node, fn) {
+  if (node?.children === undefined) {
+    return node;
+  }
+
+  return new node.constructor({
+    ...node,
+    children: node.children.map((node) => fold(node, fn))
+  });
 }
 
 export function leavesToValue(node) {
-  return fold(node, (node, visit) => {
-    if (typeof node === 'object' && node?.children === undefined) {
-      return node?.value;
-    }
+  if (node?.children === undefined) {
+    return node?.value;
+  }
 
-    return visit(node);
-  });
+  return visit(node, leavesToValue);
 }
 
-export function textToLiteral(node) {
-  return fold(node, (node, visit) => {
-    if (node?.name === 'Text') {
-      const {
-        start,
-        end,
-        content: { value, raw }
-      } = node;
-      return new Literal({ start, end, value, raw });
-    }
+// TODO this should be Word probably
+export function textToContent(node) {
+  if (node?.name === 'Text') {
+    return node.content;
+  }
 
-    return visit(node);
-  });
+  return visit(node, textToContent);
 }
 
 export function minimizeChildren(node) {
-  return fold(node, (node, visit) => {
-    node = visit(node);
-    switch (node?.name) {
-      case 'And':
-        return new And({ left: node.left, right: node.right });
-      case 'Or':
-        return new Or({ left: node.left, right: node.right });
-      case 'Not':
-        return new Not({ expression: node.expression });
-      case 'Group':
-        return new Group({ expression: node.expression });
-      case 'Term':
-        return new Term({
-          field: node.field,
-          operator: node.operator,
-          value: node.value
-        });
-      default:
-        return node;
-    }
-  });
+  node = visit(node, minimizeChildren);
+  switch (node?.name) {
+    case 'And':
+      return new And({ left: node.left, right: node.right });
+    case 'Or':
+      return new Or({ left: node.left, right: node.right });
+    case 'Not':
+      return new Not({ expression: node.expression });
+    case 'Group':
+      return new Group({ expression: node.expression });
+    case 'Term':
+      return new Term({
+        field: node.field,
+        operator: node.operator,
+        value: node.value
+      });
+    default:
+      return node;
+  }
 }
 
 export function removeGroups(node) {
-  return fold(node, (node, visit) => {
-    node = visit(node);
-    if (node?.name === 'Group') {
-      return node.expression;
-    }
+  node = visit(node, removeGroups);
+  if (node?.name === 'Group') {
+    return node.expression;
+  }
 
-    return node;
-  });
+  return node;
 }
 
 export function collapseIncomplete(node) {
-  return fold(node, (node, visit) => {
-    node = visit(node);
-    switch (node?.name) {
-      case 'And':
-      case 'Or':
-        if (node.left === undefined) {
-          return node.right;
-        }
+  node = visit(node, collapseIncomplete);
+  switch (node?.name) {
+    case 'And':
+    case 'Or':
+      if (node.left === undefined) {
+        return node.right;
+      }
 
-        if (node.right === undefined) {
-          return node.left;
-        }
+      if (node.right === undefined) {
+        return node.left;
+      }
 
-        return node;
-      case 'Not':
-      case 'Group':
-        if (node.expression === undefined) {
-          return node.expression;
-        }
+      return node;
+    case 'Not':
+    case 'Group':
+      if (node.expression === undefined) {
+        return node.expression;
+      }
 
-        return node;
-      default:
-        return node;
-    }
-  });
+      return node;
+    default:
+      return node;
+  }
 }
 
 export function removeOffsets(node) {
-  return fold(node, (node, visit) => {
-    if (typeof node !== 'object') {
-      return node;
-    }
+  if (typeof node !== 'object') {
+    return node;
+  }
 
-    const { start, end, ...rest } = node;
+  const { start, end, ...rest } = node;
 
-    return visit(new node.constructor(rest));
-  });
+  return visit(new node.constructor(rest), removeOffsets);
 }
 
 export function fieldGroupsToTermGroups(node) {
-  return fold(node, (node, visit) => {
-    if (node?.name === 'Term') {
-      const { field, operator, value } = node;
+  if (node?.name === 'Term') {
+    const { field, operator, value } = node;
 
-      switch (field?.name) {
-        case 'And':
-        case 'Or':
-        case 'Not':
-        case 'Group':
-          return fold(field, (node, visit) => {
-            switch (node?.name) {
-              case 'Word':
-              case 'Text':
-                return new Term({ field: node, operator, value });
-              default:
-                return visit(node);
-            }
-          });
-        default:
-          return visit(node);
-      }
+    switch (field?.name) {
+      case 'And':
+      case 'Or':
+      case 'Not':
+      case 'Group':
+        return fold(field, (node, visit) => {
+          switch (node?.name) {
+            case 'Word':
+            case 'Text':
+              return new Term({ field: node, operator, value });
+            default:
+              return visit(node);
+          }
+        });
+      default:
+        return visit(node, fieldGroupsToTermGroups);
     }
+  }
 
-    return visit(node);
-  });
+  return visit(node, fieldGroupsToTermGroups);
 }
 
 export function valueGroupsToTermGroups(node) {
-  return fold(node, (node, visit) => {
-    if (node?.name === 'Term') {
-      const { field, operator, value } = node;
+  if (node?.name === 'Term') {
+    const { field, operator, value } = node;
 
-      switch (value?.name) {
-        case 'And':
-        case 'Or':
-        case 'Not':
-        case 'Group':
-          return fold(value, (node, visit) => {
-            switch (node?.name) {
-              case 'Word':
-              case 'Text':
-                return new Term({ field, operator, value: node });
-              default:
-                return visit(node);
-            }
-          });
-        default:
-          return visit(node);
-      }
+    switch (value?.name) {
+      case 'And':
+      case 'Or':
+      case 'Not':
+      case 'Group':
+        return fold(value, (node, visit) => {
+          switch (node?.name) {
+            case 'Word':
+            case 'Text':
+              return new Term({ field, operator, value: node });
+            default:
+              return visit(node);
+          }
+        });
+      default:
+        return visit(node, valueGroupsToTermGroups);
     }
+  }
 
-    return visit(node);
-  });
+  return visit(node, valueGroupsToTermGroups);
 }
 
 export function astFromCst(cst) {
@@ -172,7 +156,7 @@ export function astFromCst(cst) {
     collapseIncomplete(
       removeGroups(
         leavesToValue(
-          textToLiteral(
+          textToContent(
             fieldGroupsToTermGroups(
               valueGroupsToTermGroups(minimizeChildren(cst))
             )
@@ -183,10 +167,11 @@ export function astFromCst(cst) {
   );
 }
 
-export function queryFromCst(cst) {
-  return fold(
-    cst,
-    (node, visit) =>
-      visit(node)?.children?.join('') ?? node?.raw ?? node?.value ?? ''
+export function queryFromCst(node) {
+  return (
+    visit(node, queryFromCst)?.children?.join('') ??
+    node?.raw ??
+    node?.value ??
+    ''
   );
 }
