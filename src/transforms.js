@@ -23,7 +23,6 @@ export function leavesToValue(node) {
   return visit(node, leavesToValue);
 }
 
-// TODO this should be Word probably
 export function textToContent(node) {
   if (node?.name === 'Text') {
     return node.content;
